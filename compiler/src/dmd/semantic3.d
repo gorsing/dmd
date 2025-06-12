@@ -80,7 +80,7 @@ enum LOG = false;
  */
 private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
 {
-    import core.stdc.string : strncmp;
+    import core.stdc.string : strncmp, strstr;
     import dmd.declaration  : VarDeclaration;
     import dmd.statement;
     import dmd.errors       : error;
@@ -94,8 +94,17 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
     {
         enum prefix = "/usr/include/";
         const(char)* fn = loc.filename();
-        return fn is null ||
-               strncmp(fn, prefix.ptr, prefix.length) != 0;
+        return fn is null || strncmp(fn, prefix.ptr, prefix.length) != 0;
+    }
+
+    @system @nogc
+    bool isStdLibFile(const Loc loc)
+    {
+        const(char)* f = loc.filename();
+        return f &&
+               (strstr(f, "/druntime/") ||
+                strstr(f, "/phobos/")   ||
+                strstr(f, "/ldc/"));
     }
 
     @system @nogc
@@ -104,58 +113,31 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
         return (vd.storage_class & STC.temp) != 0;
     }
 
-
     @safe @nogc
     bool varWasUsed(const VarDeclaration vd)
     {
-        bool used = false;             // накапливаем все признаки
+        bool used = false;
 
         static if (__traits(hasMember, VarDeclaration, "wasRead"))
             used |= vd.wasRead;
-
         static if (__traits(hasMember, VarDeclaration, "referenced"))
             used |= vd.referenced;
-
         static if (__traits(hasMember, VarDeclaration, "used"))
             used |= vd.used;
-
         static if (__traits(hasMember, VarDeclaration, "nestedref"))
             used |= vd.nestedref;
-
         static if (__traits(hasMember, VarDeclaration, "isSwitch"))
             used |= vd.isSwitch;
+        static if (__traits(compiles, vd.isReferenced()))
+            used |= vd.isReferenced();
 
-        return used;
+
+            return used;
     }
 
+    VarDeclaration[] locals;
 
-
-    @system @nogc
-    bool isStdLibFile(const Loc loc)
-    {
-        import core.stdc.string : strstr;
-        const(char)* f = loc.filename();
-        return f &&
-            (strstr(f, "/druntime/")  ||
-                strstr(f, "/phobos/")    ||
-                strstr(f, "/ldc/"));     // if used ldc
-    }
-
-    @system
-    void maybeWarn(VarDeclaration vd)
-    {
-        if (vd.isParameter   || vd.isDataseg) return;
-        if (isCompilerTempSys(vd))            return;
-        if (!isUserLocSys(vd.loc))            return;
-        if (isStdLibFile(vd.loc))             return;
-        if (varWasUsed(vd))                   return;
-
-        error(vd.loc,
-              "variable `%s` declared but never used",
-              vd.ident.toChars());                  // C-string -> var-args
-    }
-
-    void walkStmt(Statement s) /*@safe*/
+    void collect(Statement s) /*@safe*/
     {
         if (s is null) return;
 
@@ -163,52 +145,65 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
         {
             if (auto de = (es.exp ? es.exp.isDeclarationExp() : null))
                 if (auto vd = de.declaration.isVarDeclaration())
-                    maybeWarn(vd);
+                    locals ~= vd;
         }
         else if (auto cds = s.isCompoundDeclarationStatement())
         {
             if (cds.statements)
-                foreach (sub; *cds.statements) walkStmt(sub);
+                foreach (sub; *cds.statements) collect(sub);
         }
         else if (auto cs = s.isCompoundStatement())
         {
             if (cs.statements)
-                foreach (sub; *cs.statements) walkStmt(sub);
+                foreach (sub; *cs.statements) collect(sub);
         }
-        else if (auto ss = s.isScopeStatement())            walkStmt(ss.statement);
+        else if (auto ss = s.isScopeStatement())          collect(ss.statement);
         else if (auto ifs = s.isIfStatement())
         {
-            walkStmt(ifs.ifbody);
-            walkStmt(ifs.elsebody);
+            collect(ifs.ifbody);
+            collect(ifs.elsebody);
         }
-        else if (auto ws  = s.isWhileStatement())           walkStmt(ws._body);
-        else if (auto fs  = s.isForStatement())             walkStmt(fs._body);
-        else if (auto frs = s.isForeachRangeStatement())    walkStmt(frs._body);
-        else if (auto fes = s.isForeachStatement())         walkStmt(fes._body);
+        else if (auto ws = s.isWhileStatement())          collect(ws._body);
+        else if (auto fs = s.isForStatement())            collect(fs._body);
+        else if (auto frs = s.isForeachRangeStatement())  collect(frs._body);
+        else if (auto fes = s.isForeachStatement())       collect(fes._body);
         else if (auto tcs = s.isTryCatchStatement())
         {
-            walkStmt(tcs._body);
-            if (tcs.catches) foreach (c; *tcs.catches) walkStmt(c.handler);
+            collect(tcs._body);
+            if (tcs.catches) foreach (c; *tcs.catches) collect(c.handler);
         }
         else if (auto tfs = s.isTryFinallyStatement())
         {
-            walkStmt(tfs._body);
-            walkStmt(tfs.finalbody);
+            collect(tfs._body);
+            collect(tfs.finalbody);
         }
         else if (auto sws = s.isSwitchStatement())
         {
-            if (sws.cases)   foreach (c; *sws.cases) walkStmt(c.statement);
-            if (auto def = sws.sdefault)             walkStmt(def.statement);
+            if (sws.cases) foreach (c; *sws.cases) collect(c.statement);
+            if (auto def = sws.sdefault) collect(def.statement);
         }
-        else if (auto cas = s.isCaseStatement())             walkStmt(cas.statement);
-        else if (auto dfs = s.isDefaultStatement())          walkStmt(dfs.statement);
+        else if (auto cas = s.isCaseStatement())          collect(cas.statement);
+        else if (auto dfs = s.isDefaultStatement())       collect(dfs.statement);
         else if (auto ul  = s.isUnrolledLoopStatement())
         {
-            if (ul.statements) foreach (sub; *ul.statements) walkStmt(sub);
+            if (ul.statements) foreach (sub; *ul.statements) collect(sub);
         }
     }
 
-    walkStmt(fd.fbody);
+    collect(fd.fbody);
+
+    foreach (vd; locals)
+    {
+        if (vd.isParameter || vd.isDataseg) continue;
+        if (isCompilerTempSys(vd))          continue;
+        if (!isUserLocSys(vd.loc))          continue;
+        if (isStdLibFile(vd.loc))           continue;
+        if (varWasUsed(vd))                 continue;
+
+        error(vd.loc,
+              "variable `%s` declared but never used",
+              vd.ident.toChars());
+    }
 }
 
 
@@ -341,8 +336,31 @@ private extern(C++) final class Semantic3Visitor : Visitor
                 s.semantic3(sc);
 
                 mod.runDeferredSemantic2();
+
             }
         }
+        // --- new: run -check=unused after *all* semantic3 has finished ---
+        if (global.params.analyzeUnused == CHECKENABLE.on)
+        {
+
+            void scan(Dsymbol s)
+            {
+                if (auto fd = s.isFuncDeclaration())
+                    analyzeUnusedVariables(fd);
+
+                if (auto sd = s.isScopeDsymbol())
+                {
+                    if (sd.members)
+                        foreach (m; *sd.members)
+                            scan(m);
+                }
+            }
+
+            if (mod.members)
+                foreach (m; *mod.members)
+                    scan(m);
+        }
+        // ----------------------------------------------------------------
         if (mod.userAttribDecl)
         {
             mod.userAttribDecl.semantic3(sc);
@@ -1570,8 +1588,6 @@ private extern(C++) final class Semantic3Visitor : Visitor
          * done by TemplateInstance::semantic.
          * Otherwise, error gagging should be temporarily ungagged by functionSemantic3.
          */
-
-        analyzeUnusedVariables(funcdecl);
 
         funcdecl.semanticRun = PASS.semantic3done;
         if ((global.errors != oldErrors) || (funcdecl.fbody && funcdecl.fbody.isErrorStatement()))
