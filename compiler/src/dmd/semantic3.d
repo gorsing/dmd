@@ -101,7 +101,6 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
     @system @nogc
     bool isCompilerTempSys(const VarDeclaration vd)
     {
-        /* foreach-temps всегда помечены STC.temp|STC.foreach_ */
         return (vd.storage_class & STC.temp) != 0;
     }
 
