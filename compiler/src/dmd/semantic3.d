@@ -75,6 +75,120 @@ import dmd.visitor;
 
 enum LOG = false;
 
+/*************************************
+ * Warn about locals declared but never used  (-check=unused)
+ */
+private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
+{
+    import core.stdc.string : strncmp;
+    import dmd.declaration  : VarDeclaration;
+    import dmd.statement;
+    import dmd.errors       : error;
+    import dmd.astenums     : STC;
+
+    if (global.params.analyzeUnused != CHECKENABLE.on || fd.fbody is null)
+        return;
+
+    @system @nogc
+    bool isUserLocSys(const Loc loc)
+    {
+        enum prefix = "/usr/include/";
+        const(char)* fn = loc.filename();
+        return fn is null ||
+               strncmp(fn, prefix.ptr, prefix.length) != 0;
+    }
+
+    @system @nogc
+    bool isCompilerTempSys(const VarDeclaration vd)
+    {
+        /* foreach-temps всегда помечены STC.temp|STC.foreach_ */
+        return (vd.storage_class & STC.temp) != 0;
+    }
+
+
+    @safe @nogc
+    bool varWasUsed(const VarDeclaration vd)
+    {
+        static if (__traits(hasMember, VarDeclaration, "wasRead"))
+            return vd.wasRead;
+        else static if (__traits(hasMember, VarDeclaration, "referenced"))
+            return vd.referenced;
+        else static if (__traits(hasMember, VarDeclaration, "used"))
+            return vd.used;
+        else
+            return true;
+    }
+
+
+    @system
+    void maybeWarn(VarDeclaration vd)
+    {
+        if (vd.isParameter   || vd.isDataseg)       return;
+        if (isCompilerTempSys(vd))                  return;
+        if (varWasUsed(vd))                         return;
+        if (!isUserLocSys(vd.loc))                  return;
+
+        error(vd.loc,
+              "variable `%s` declared but never used",
+              vd.ident.toChars());                  // C-строка → var-args
+    }
+
+    void walkStmt(Statement s) /*@safe*/
+    {
+        if (s is null) return;
+
+        if (auto es = s.isExpStatement())
+        {
+            if (auto de = (es.exp ? es.exp.isDeclarationExp() : null))
+                if (auto vd = de.declaration.isVarDeclaration())
+                    maybeWarn(vd);
+        }
+        else if (auto cds = s.isCompoundDeclarationStatement())
+        {
+            if (cds.statements)
+                foreach (sub; *cds.statements) walkStmt(sub);
+        }
+        else if (auto cs = s.isCompoundStatement())
+        {
+            if (cs.statements)
+                foreach (sub; *cs.statements) walkStmt(sub);
+        }
+        else if (auto ss = s.isScopeStatement())            walkStmt(ss.statement);
+        else if (auto ifs = s.isIfStatement())
+        {
+            walkStmt(ifs.ifbody);
+            walkStmt(ifs.elsebody);
+        }
+        else if (auto ws  = s.isWhileStatement())           walkStmt(ws._body);
+        else if (auto fs  = s.isForStatement())             walkStmt(fs._body);
+        else if (auto frs = s.isForeachRangeStatement())    walkStmt(frs._body);
+        else if (auto fes = s.isForeachStatement())         walkStmt(fes._body);
+        else if (auto tcs = s.isTryCatchStatement())
+        {
+            walkStmt(tcs._body);
+            if (tcs.catches) foreach (c; *tcs.catches) walkStmt(c.handler);
+        }
+        else if (auto tfs = s.isTryFinallyStatement())
+        {
+            walkStmt(tfs._body);
+            walkStmt(tfs.finalbody);
+        }
+        else if (auto sws = s.isSwitchStatement())
+        {
+            if (sws.cases)   foreach (c; *sws.cases) walkStmt(c.statement);
+            if (auto def = sws.sdefault)             walkStmt(def.statement);
+        }
+        else if (auto cas = s.isCaseStatement())             walkStmt(cas.statement);
+        else if (auto dfs = s.isDefaultStatement())          walkStmt(dfs.statement);
+        else if (auto ul  = s.isUnrolledLoopStatement())
+        {
+            if (ul.statements) foreach (sub; *ul.statements) walkStmt(sub);
+        }
+    }
+
+    walkStmt(fd.fbody);
+}
+
 
 /*************************************
  * Does semantic analysis on function bodies.
@@ -1434,6 +1548,9 @@ private extern(C++) final class Semantic3Visitor : Visitor
          * done by TemplateInstance::semantic.
          * Otherwise, error gagging should be temporarily ungagged by functionSemantic3.
          */
+
+        analyzeUnusedVariables(funcdecl);
+
         funcdecl.semanticRun = PASS.semantic3done;
         if ((global.errors != oldErrors) || (funcdecl.fbody && funcdecl.fbody.isErrorStatement()))
             funcdecl.hasSemantic3Errors = true;

@@ -740,6 +740,7 @@ bool parseCommandLine(const ref Strings arguments, const size_t argc, ref Param 
                 params.useInvariants    = CHECKENABLE.on;
                 params.useOut           = CHECKENABLE.on;
                 params.useSwitchError   = CHECKENABLE.on;
+                params.analyzeUnused    = CHECKENABLE.on;
             }
             else if (checkarg == "off")
             {
@@ -749,13 +750,16 @@ bool parseCommandLine(const ref Strings arguments, const size_t argc, ref Param 
                 params.useInvariants    = CHECKENABLE.off;
                 params.useOut           = CHECKENABLE.off;
                 params.useSwitchError   = CHECKENABLE.off;
+                params.analyzeUnused    = CHECKENABLE.off;
             }
             else if (!(check(checkarg, "assert",    params.useAssert) ||
                   check(checkarg, "bounds",    params.useArrayBounds) ||
                   check(checkarg, "in",        params.useIn         ) ||
                   check(checkarg, "invariant", params.useInvariants ) ||
                   check(checkarg, "out",       params.useOut        ) ||
-                  check(checkarg, "switch",    params.useSwitchError)))
+                  check(checkarg, "switch",    params.useSwitchError) ||
+                  check(checkarg, "unused",    params.analyzeUnused ))
+                  )
             {
                 errorInvalidSwitch(p);
                 params.help.check = true;

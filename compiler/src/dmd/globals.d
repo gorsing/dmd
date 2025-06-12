@@ -114,6 +114,7 @@ extern(C++) struct Help
     bool transition;   // -transition
     bool check;        // -check
     bool checkAction;  // -checkaction
+    bool checkUnused;  // -check=unused
     bool revert;       // -revert
     bool preview;      // -preview
     bool externStd;    // -extern-std
@@ -226,6 +227,7 @@ extern (C++) struct Param
     CHECKENABLE useAssert      = CHECKENABLE._default;  // when to generate code for assert()'s
     CHECKENABLE useSwitchError = CHECKENABLE._default;  // check for switches without a default
     CHECKENABLE boundscheck    = CHECKENABLE._default;  // state of -boundscheck switch
+    CHECKENABLE analyzeUnused  = CHECKENABLE._default;   // -check=unused
 
     CHECKACTION checkAction = CHECKACTION.D; // action to take when bounds, asserts or switch defaults are violated
 

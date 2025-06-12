@@ -209,7 +209,7 @@ struct Usage
         Option("c",
             "compile only, do not link"
         ),
-        Option("check=[assert|bounds|in|invariant|out|switch][=[on|off]]",
+        Option("check=[assert|bounds|in|invariant|out|switch|unused][=[on|off]]",
             "enable or disable specific checks",
             `Overrides default, -boundscheck, -release and -unittest options to enable or disable specific checks.
                 $(UL
@@ -219,6 +219,7 @@ struct Usage
                     $(LI $(B invariant): class/struct invariants)
                     $(LI $(B out): out contracts)
                     $(LI $(B switch): $(D final switch) failure checking)
+                    $(LI $(B unused): warn about locals declared but never used)
                 )
                 $(UL
                     $(LI $(B on) or not specified: specified check is enabled.)
@@ -1120,6 +1121,7 @@ struct CLIUsage
   =invariant[=[on|off]] Class/struct invariants
   =out[=[on|off]]       Out contracts
   =switch[=[on|off]]    Final switch failure checking
+  =unused               Warn about locals declared but never used
   =on                   Enable all assertion checking
                         (default for non-release builds)
   =off                  Disable all assertion checking
