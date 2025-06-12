@@ -129,7 +129,7 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
 
         error(vd.loc,
               "variable `%s` declared but never used",
-              vd.ident.toChars());                  // C-строка → var-args
+              vd.ident.toChars());                  // C-string -> var-args
     }
 
     void walkStmt(Statement s) /*@safe*/
