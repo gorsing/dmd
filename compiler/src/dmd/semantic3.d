@@ -108,24 +108,47 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
     @safe @nogc
     bool varWasUsed(const VarDeclaration vd)
     {
+        bool used = false;             // накапливаем все признаки
+
         static if (__traits(hasMember, VarDeclaration, "wasRead"))
-            return vd.wasRead;
-        else static if (__traits(hasMember, VarDeclaration, "referenced"))
-            return vd.referenced;
-        else static if (__traits(hasMember, VarDeclaration, "used"))
-            return vd.used;
-        else
-            return true;
+            used |= vd.wasRead;
+
+        static if (__traits(hasMember, VarDeclaration, "referenced"))
+            used |= vd.referenced;
+
+        static if (__traits(hasMember, VarDeclaration, "used"))
+            used |= vd.used;
+
+        static if (__traits(hasMember, VarDeclaration, "nestedref"))
+            used |= vd.nestedref;
+
+        static if (__traits(hasMember, VarDeclaration, "isSwitch"))
+            used |= vd.isSwitch;
+
+        return used;
     }
 
+
+
+    @system @nogc
+    bool isStdLibFile(const Loc loc)
+    {
+        import core.stdc.string : strstr;
+        const(char)* f = loc.filename();
+        return f &&
+            (strstr(f, "/druntime/")  ||
+                strstr(f, "/phobos/")    ||
+                strstr(f, "/ldc/"));     // if used ldc
+    }
 
     @system
     void maybeWarn(VarDeclaration vd)
     {
-        if (vd.isParameter   || vd.isDataseg)       return;
-        if (isCompilerTempSys(vd))                  return;
-        if (varWasUsed(vd))                         return;
-        if (!isUserLocSys(vd.loc))                  return;
+        if (vd.isParameter   || vd.isDataseg) return;
+        if (isCompilerTempSys(vd))            return;
+        if (!isUserLocSys(vd.loc))            return;
+        if (isStdLibFile(vd.loc))             return;
+        if (varWasUsed(vd))                   return;
 
         error(vd.loc,
               "variable `%s` declared but never used",
