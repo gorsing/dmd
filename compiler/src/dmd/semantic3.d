@@ -77,14 +77,15 @@ enum LOG = false;
 
 /*************************************
  * Warn about locals declared but never used  (-check=unused)
- */
-private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
+ *************************************/
+private void analyzeUnusedVariables(FuncDeclaration fd) @system
 {
-    import core.stdc.string : strncmp, strstr;
-    import dmd.declaration  : VarDeclaration;
-    import dmd.statement;
-    import dmd.errors       : error;
-    import dmd.astenums     : STC;
+    import core.stdc.string   : strncmp, strstr;
+    import dmd.declaration    : VarDeclaration;
+    import dmd.errors         : error;
+    import dmd.astenums       : STC;
+    import dmd.expression     : expToVariable;
+    import dmd.visitor        : StoppableVisitor;
 
     if (global.params.analyzeUnused != CHECKENABLE.on || fd.fbody is null)
         return;
@@ -113,81 +114,92 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
         return (vd.storage_class & STC.temp) != 0;
     }
 
-    @safe @nogc
-    bool varWasUsed(const VarDeclaration vd)
+    bool appearsInBody(const VarDeclaration target, Statement root)
     {
-        bool used = false;
+        bool found = false;
 
-        static if (__traits(hasMember, VarDeclaration, "wasRead"))
-            used |= vd.wasRead;
-        static if (__traits(hasMember, VarDeclaration, "referenced"))
-            used |= vd.referenced;
-        static if (__traits(hasMember, VarDeclaration, "used"))
-            used |= vd.used;
-        static if (__traits(hasMember, VarDeclaration, "nestedref"))
-            used |= vd.nestedref;
-        static if (__traits(hasMember, VarDeclaration, "isSwitch"))
-            used |= vd.isSwitch;
-        static if (__traits(compiles, vd.isReferenced()))
-            used |= vd.isReferenced();
+        void checkExp(Expression e)
+        {
+            if (auto ie = e.isIdentifierExp())
+            {
+                int deref;
+                if (expToVariable(ie, deref) is target)
+                    found = true;
+            }
+        }
 
+        void traverse(Statement s)
+        {
+            if (found || s is null) return;
 
-            return used;
+            if (auto es = s.isExpStatement())
+            {
+                if (es.exp)
+                    checkExp(es.exp);
+            }
+            else if (auto cs = s.isCompoundStatement())
+            {
+                foreach (sub; *cs.statements)
+                    traverse(sub);
+            }
+            else if (auto ss = s.isScopeStatement())
+                traverse(ss.statement);
+            // додайте решту типів за потреби...
+        }
+
+        traverse(root);
+        return found;
     }
 
-    VarDeclaration[] locals;
 
-    void collect(Statement s) /*@safe*/
+    @system
+    bool varWasUsed(const VarDeclaration vd)
+    {
+        static if (__traits(compiles, vd.isUsed))       if (vd.isUsed())       return true;
+        static if (__traits(compiles, vd.isReferenced)) if (vd.isReferenced()) return true;
+        static if (__traits(hasMember, VarDeclaration, "inClosure"))  if (vd.inClosure)          return true;
+        static if (__traits(hasMember, VarDeclaration, "nestedrefs")) if (vd.nestedrefs.length)  return true;
+        static if (__traits(hasMember, VarDeclaration, "wasRead"))     if (vd.wasRead)            return true;
+        static if (__traits(hasMember, VarDeclaration, "referenced")) if (vd.referenced)         return true;
+        static if (__traits(hasMember, VarDeclaration, "used"))       if (vd.used)               return true;
+        static if (__traits(hasMember, VarDeclaration, "nestedref"))  if (vd.nestedref)          return true;
+        static if (__traits(hasMember, VarDeclaration, "isSwitch"))   if (vd.isSwitch)           return true;
+
+        return appearsInBody(vd, fd.fbody);
+    }
+
+    // Collect all local var declarations
+    VarDeclaration[] locals;
+    void collect(Statement s) @safe
     {
         if (s is null) return;
-
         if (auto es = s.isExpStatement())
         {
-            if (auto de = (es.exp ? es.exp.isDeclarationExp() : null))
+            auto de = es.exp ? es.exp.isDeclarationExp() : null;
+            if (de !is null)
                 if (auto vd = de.declaration.isVarDeclaration())
                     locals ~= vd;
         }
-        else if (auto cds = s.isCompoundDeclarationStatement())
-        {
-            if (cds.statements)
-                foreach (sub; *cds.statements) collect(sub);
-        }
         else if (auto cs = s.isCompoundStatement())
-        {
-            if (cs.statements)
-                foreach (sub; *cs.statements) collect(sub);
-        }
-        else if (auto ss = s.isScopeStatement())          collect(ss.statement);
-        else if (auto ifs = s.isIfStatement())
-        {
-            collect(ifs.ifbody);
-            collect(ifs.elsebody);
-        }
-        else if (auto ws = s.isWhileStatement())          collect(ws._body);
-        else if (auto fs = s.isForStatement())            collect(fs._body);
-        else if (auto frs = s.isForeachRangeStatement())  collect(frs._body);
-        else if (auto fes = s.isForeachStatement())       collect(fes._body);
+            foreach (sub; *cs.statements) collect(sub);
+        else if (auto cds = s.isCompoundDeclarationStatement())
+            foreach (sub; *cds.statements) collect(sub);
+        else if (auto ss = s.isScopeStatement()) collect(ss.statement);
+        else if (auto ifs = s.isIfStatement()) { collect(ifs.ifbody); collect(ifs.elsebody); }
+        else if (auto ws = s.isWhileStatement()) collect(ws._body);
+        else if (auto fs = s.isForStatement()) collect(fs._body);
+        else if (auto frs = s.isForeachRangeStatement()) collect(frs._body);
+        else if (auto fes = s.isForeachStatement()) collect(fes._body);
         else if (auto tcs = s.isTryCatchStatement())
         {
             collect(tcs._body);
             if (tcs.catches) foreach (c; *tcs.catches) collect(c.handler);
         }
-        else if (auto tfs = s.isTryFinallyStatement())
-        {
-            collect(tfs._body);
-            collect(tfs.finalbody);
-        }
-        else if (auto sws = s.isSwitchStatement())
-        {
-            if (sws.cases) foreach (c; *sws.cases) collect(c.statement);
-            if (auto def = sws.sdefault) collect(def.statement);
-        }
-        else if (auto cas = s.isCaseStatement())          collect(cas.statement);
-        else if (auto dfs = s.isDefaultStatement())       collect(dfs.statement);
-        else if (auto ul  = s.isUnrolledLoopStatement())
-        {
-            if (ul.statements) foreach (sub; *ul.statements) collect(sub);
-        }
+        else if (auto tfs = s.isTryFinallyStatement()) { collect(tfs._body); collect(tfs.finalbody); }
+        else if (auto sws = s.isSwitchStatement()) { foreach (c; *sws.cases) collect(c.statement); if (auto def = sws.sdefault) collect(def.statement); }
+        else if (auto cas = s.isCaseStatement()) collect(cas.statement);
+        else if (auto dfs = s.isDefaultStatement()) collect(dfs.statement);
+        else if (auto ul = s.isUnrolledLoopStatement()) foreach (sub; *ul.statements) collect(sub);
     }
 
     collect(fd.fbody);
@@ -199,10 +211,7 @@ private void analyzeUnusedVariables(FuncDeclaration fd) /*@safe*/
         if (!isUserLocSys(vd.loc))          continue;
         if (isStdLibFile(vd.loc))           continue;
         if (varWasUsed(vd))                 continue;
-
-        error(vd.loc,
-              "variable `%s` declared but never used",
-              vd.ident.toChars());
+        error(vd.loc, "variable `%s` declared but never used", vd.ident.toChars());
     }
 }
 
