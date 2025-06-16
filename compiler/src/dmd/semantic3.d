@@ -118,10 +118,12 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
     {
         bool found = false;
 
+        // Recursively scan an expression for our target variable
         void checkExp(Expression e)
         {
-            if (!e || found) return;
+            if (e is null || found) return;
 
+            // identifier → variable?
             if (auto ie = e.isIdentifierExp())
             {
                 int deref;
@@ -149,6 +151,7 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             }
             else if (auto fe = e.isFuncExp())
             {
+                // nested function literal → scan its body too
                 if (fe.fd && fe.fd.fbody && appearsInBody(target, fe.fd.fbody))
                 {
                     found = true;
@@ -173,81 +176,85 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             }
             else if (auto dexp = e.isDeclarationExp())
             {
+                // var x = <init>; scan <init>
                 if (auto vd = dexp.declaration.isVarDeclaration())
                     if (auto ei = vd._init.isExpInitializer())
                         checkExp(ei.exp);
             }
         }
 
+        // Recursively scan all the Statement kinds we care about
         void walkStmt(Statement s)
         {
-            if (!s || found) return;
+            if (s is null || found) return;
 
+            // expression statement
             if (auto es = s.isExpStatement())
             {
                 checkExp(es.exp);
             }
+            // { … }
             else if (auto cs = s.isCompoundStatement())
             {
                 foreach (sub; *cs.statements)
                     walkStmt(sub);
             }
-            else if (auto ss = s.isScopeStatement())
+            // scope(...) { … }
+            else if (auto sc = s.isScopeStatement())
             {
-                walkStmt(ss.statement);
+                walkStmt(sc.statement);
             }
+            // runtime foreach (forward & reverse)
+            else if (auto fe = s.isForeachStatement())
+            {
+                walkStmt(fe._body);
+            }
+            // foreach(range)
+            else if (auto fr = s.isForeachRangeStatement())
+            {
+                walkStmt(fr._body);
+            }
+            // for(init; cond; incr) { … }
+            else if (auto fs = s.isForStatement())
+            {
+                if (fs.init) walkStmt(fs.init);
+                if (fs.condition) checkExp(fs.condition);
+
+                // **Here’s the fix**:
+                // increment is a single Expression (or a comma-expression),
+                // so just scan it directly.
+                if (fs.increment)
+                    checkExp(fs.increment);
+
+                walkStmt(fs._body);
+            }
+            // do { … } while(cond);
+            else if (auto ds = s.isDoStatement())
+            {
+                walkStmt(ds._body);
+                if (ds.condition) checkExp(ds.condition);
+            }
+            // while(cond) { … }
+            else if (auto ws = s.isWhileStatement())
+            {
+                if (ws.condition) checkExp(ws.condition);
+                walkStmt(ws._body);
+            }
+            // if(cond) … [ else … ]
             else if (auto iff = s.isIfStatement())
             {
-                checkExp(iff.condition);
+                if (iff.condition) checkExp(iff.condition);
                 walkStmt(iff.ifbody);
                 walkStmt(iff.elsebody);
             }
-            else if (auto ws = s.isWhileStatement())
-            {
-                checkExp(ws.condition);
-                walkStmt(ws._body);
-            }
-            else if (auto fs = s.isForStatement())
-            {
-                if (fs.condition) checkExp(fs.condition);
-                walkStmt(fs._body);
-            }
-            else if (auto frs = s.isForeachRangeStatement())
-            {
-                walkStmt(frs._body);
-            }
-            else if (auto fes = s.isForeachStatement())
-            {
-                walkStmt(fes._body);
-            }
+            // switch … case … default …
             else if (auto sw = s.isSwitchStatement())
             {
-                checkExp(sw.condition);
+                if (sw.condition) checkExp(sw.condition);
                 foreach (c; *sw.cases)
                     walkStmt(c.statement);
                 if (sw.sdefault)
                     walkStmt(sw.sdefault.statement);
-            }
-            else if (auto tc = s.isTryCatchStatement())
-            {
-                walkStmt(tc._body);
-                if (tc.catches)
-                {
-                    foreach (c; *tc.catches)
-                    {
-                        if (c.var is target)
-                        {
-                            found = true;
-                            return;
-                        }
-                        walkStmt(c.handler);
-                    }
-                }
-            }
-            else if (auto tf = s.isTryFinallyStatement())
-            {
-                walkStmt(tf._body);
-                walkStmt(tf.finalbody);
             }
             else if (auto cas = s.isCaseStatement())
             {
@@ -257,16 +264,44 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             {
                 walkStmt(dfs.statement);
             }
+            // try { … } catch { … }
+            else if (auto tc = s.isTryCatchStatement())
+            {
+                walkStmt(tc._body);
+                if (tc.catches)
+                {
+                    foreach (c; *tc.catches)
+                    {
+                        // catching our var counts as a use
+                        if (c.var is target)
+                        {
+                            found = true;
+                            return;
+                        }
+                        walkStmt(c.handler);
+                    }
+                }
+            }
+            // try { … } finally { … }
+            else if (auto tf = s.isTryFinallyStatement())
+            {
+                walkStmt(tf._body);
+                walkStmt(tf.finalbody);
+            }
+            // pragma(msg, unrolled loop)
             else if (auto ul = s.isUnrolledLoopStatement())
             {
                 foreach (sub; *ul.statements)
                     walkStmt(sub);
             }
+            // (Add new Statement kinds here as needed…)
         }
 
         walkStmt(root);
         return found;
     }
+
+
 
     @system
     bool varWasUsed(const VarDeclaration vd)
