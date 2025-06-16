@@ -84,7 +84,7 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
     import dmd.declaration    : VarDeclaration;
     import dmd.errors         : error;
     import dmd.astenums       : STC;
-    import dmd.expression     : expToVariable;
+    import dmd.expression     : Expression, expToVariable, FuncExp;
     import dmd.visitor        : StoppableVisitor;
 
     if (global.params.analyzeUnused != CHECKENABLE.on || fd.fbody is null)
@@ -120,37 +120,153 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
 
         void checkExp(Expression e)
         {
+            if (!e || found) return;
+
             if (auto ie = e.isIdentifierExp())
             {
                 int deref;
                 if (expToVariable(ie, deref) is target)
+                {
                     found = true;
+                    return;
+                }
+            }
+            else if (auto be = e.isBinExp())
+            {
+                checkExp(be.e1);
+                checkExp(be.e2);
+            }
+            else if (auto ue = e.isUnaExp())
+            {
+                checkExp(ue.e1);
+            }
+            else if (auto ce = e.isCallExp())
+            {
+                checkExp(ce.e1);
+                if (ce.arguments)
+                    foreach (arg; *ce.arguments)
+                        checkExp(arg);
+            }
+            else if (auto fe = e.isFuncExp())
+            {
+                if (fe.fd && fe.fd.fbody && appearsInBody(target, fe.fd.fbody))
+                {
+                    found = true;
+                    return;
+                }
+            }
+            else if (auto de = e.isDotExp())
+            {
+                checkExp(de.e1);
+                checkExp(de.e2);
+            }
+            else if (auto iex = e.isIndexExp())
+            {
+                checkExp(iex.e1);
+                checkExp(iex.e2);
+            }
+            else if (auto se = e.isSliceExp())
+            {
+                checkExp(se.e1);
+                if (se.lwr) checkExp(se.lwr);
+                if (se.upr) checkExp(se.upr);
+            }
+            else if (auto dexp = e.isDeclarationExp())
+            {
+                if (auto vd = dexp.declaration.isVarDeclaration())
+                    if (auto ei = vd._init.isExpInitializer())
+                        checkExp(ei.exp);
             }
         }
 
-        void traverse(Statement s)
+        void walkStmt(Statement s)
         {
-            if (found || s is null) return;
+            if (!s || found) return;
 
             if (auto es = s.isExpStatement())
             {
-                if (es.exp)
-                    checkExp(es.exp);
+                checkExp(es.exp);
             }
             else if (auto cs = s.isCompoundStatement())
             {
                 foreach (sub; *cs.statements)
-                    traverse(sub);
+                    walkStmt(sub);
             }
             else if (auto ss = s.isScopeStatement())
-                traverse(ss.statement);
-            // додайте решту типів за потреби...
+            {
+                walkStmt(ss.statement);
+            }
+            else if (auto iff = s.isIfStatement())
+            {
+                checkExp(iff.condition);
+                walkStmt(iff.ifbody);
+                walkStmt(iff.elsebody);
+            }
+            else if (auto ws = s.isWhileStatement())
+            {
+                checkExp(ws.condition);
+                walkStmt(ws._body);
+            }
+            else if (auto fs = s.isForStatement())
+            {
+                if (fs.condition) checkExp(fs.condition);
+                walkStmt(fs._body);
+            }
+            else if (auto frs = s.isForeachRangeStatement())
+            {
+                walkStmt(frs._body);
+            }
+            else if (auto fes = s.isForeachStatement())
+            {
+                walkStmt(fes._body);
+            }
+            else if (auto sw = s.isSwitchStatement())
+            {
+                checkExp(sw.condition);
+                foreach (c; *sw.cases)
+                    walkStmt(c.statement);
+                if (sw.sdefault)
+                    walkStmt(sw.sdefault.statement);
+            }
+            else if (auto tc = s.isTryCatchStatement())
+            {
+                walkStmt(tc._body);
+                if (tc.catches)
+                {
+                    foreach (c; *tc.catches)
+                    {
+                        if (c.var is target)
+                        {
+                            found = true;
+                            return;
+                        }
+                        walkStmt(c.handler);
+                    }
+                }
+            }
+            else if (auto tf = s.isTryFinallyStatement())
+            {
+                walkStmt(tf._body);
+                walkStmt(tf.finalbody);
+            }
+            else if (auto cas = s.isCaseStatement())
+            {
+                walkStmt(cas.statement);
+            }
+            else if (auto dfs = s.isDefaultStatement())
+            {
+                walkStmt(dfs.statement);
+            }
+            else if (auto ul = s.isUnrolledLoopStatement())
+            {
+                foreach (sub; *ul.statements)
+                    walkStmt(sub);
+            }
         }
 
-        traverse(root);
+        walkStmt(root);
         return found;
     }
-
 
     @system
     bool varWasUsed(const VarDeclaration vd)
@@ -168,7 +284,7 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
         return appearsInBody(vd, fd.fbody);
     }
 
-    // Collect all local var declarations
+    // теперь — сбор и проверка
     VarDeclaration[] locals;
     void collect(Statement s) @safe
     {
@@ -176,15 +292,15 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
         if (auto es = s.isExpStatement())
         {
             auto de = es.exp ? es.exp.isDeclarationExp() : null;
-            if (de !is null)
-                if (auto vd = de.declaration.isVarDeclaration())
-                    locals ~= vd;
+            if (de !is null && de.declaration.isVarDeclaration())
+                locals ~= de.declaration.isVarDeclaration();
         }
         else if (auto cs = s.isCompoundStatement())
             foreach (sub; *cs.statements) collect(sub);
         else if (auto cds = s.isCompoundDeclarationStatement())
             foreach (sub; *cds.statements) collect(sub);
-        else if (auto ss = s.isScopeStatement()) collect(ss.statement);
+        else if (auto ss = s.isScopeStatement())
+            collect(ss.statement);
         else if (auto ifs = s.isIfStatement()) { collect(ifs.ifbody); collect(ifs.elsebody); }
         else if (auto ws = s.isWhileStatement()) collect(ws._body);
         else if (auto fs = s.isForStatement()) collect(fs._body);
@@ -196,21 +312,24 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             if (tcs.catches) foreach (c; *tcs.catches) collect(c.handler);
         }
         else if (auto tfs = s.isTryFinallyStatement()) { collect(tfs._body); collect(tfs.finalbody); }
-        else if (auto sws = s.isSwitchStatement()) { foreach (c; *sws.cases) collect(c.statement); if (auto def = sws.sdefault) collect(def.statement); }
+        else if (auto sws = s.isSwitchStatement())
+        {
+            foreach (c; *sws.cases) collect(c.statement);
+            if (auto def = sws.sdefault) collect(def.statement);
+        }
         else if (auto cas = s.isCaseStatement()) collect(cas.statement);
         else if (auto dfs = s.isDefaultStatement()) collect(dfs.statement);
         else if (auto ul = s.isUnrolledLoopStatement()) foreach (sub; *ul.statements) collect(sub);
     }
 
     collect(fd.fbody);
-
     foreach (vd; locals)
     {
-        if (vd.isParameter || vd.isDataseg) continue;
-        if (isCompilerTempSys(vd))          continue;
-        if (!isUserLocSys(vd.loc))          continue;
-        if (isStdLibFile(vd.loc))           continue;
-        if (varWasUsed(vd))                 continue;
+        if (vd.isParameter || vd.isDataseg)     continue;
+        if (isCompilerTempSys(vd))              continue;
+        if (!isUserLocSys(vd.loc))              continue;
+        if (isStdLibFile(vd.loc))               continue;
+        if (varWasUsed(vd))                     continue;
         error(vd.loc, "variable `%s` declared but never used", vd.ident.toChars());
     }
 }
