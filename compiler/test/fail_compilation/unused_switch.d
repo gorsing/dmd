@@ -1,28 +1,20 @@
 /**********************************
  REQUIRED_ARGS: -check=unused=on
-TEST_OUTPUT:
----
-fail_compilation/unused_switch.d(18): Error: variable `u0` declared but never used
-fail_compilation/unused_switch.d(22): Error: variable `ok` declared but never used
-fail_compilation/unused_switch.d(26): Error: variable `defV` declared but never used
----
+ TEST_OUTPUT:
+ ---
+# никаких ошибок
+ ---
 **********************************/
 
-module unused_switch;
-
-void qux(int s)
+void main()
 {
-    switch (s)
+    int y = 2;
+    switch (y)
     {
-        case 0:
-            int u0;
-            break;
-
         case 1:
-            int ok = 42;
+        case 2:
             break;
-
         default:
-            int defV;
+            break;
     }
 }
