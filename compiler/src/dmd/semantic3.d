@@ -140,6 +140,16 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             else if (auto ce = e.isCallExp())
             {
                 checkExp(ce.e1);
+                if (auto ie = ce.e1.isIdentifierExp())
+                {
+                    int deref;
+                    if (expToVariable(ie, deref) is target)
+                    {
+                        found = true;
+                        return;
+                    }
+                }
+
                 if (ce.arguments)
                     foreach (arg; *ce.arguments)
                         checkExp(arg);
@@ -171,8 +181,9 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             else if (auto dexp = e.isDeclarationExp())
             {
                 if (auto vd = dexp.declaration.isVarDeclaration())
-                    if (auto ei = vd._init.isExpInitializer())
-                        checkExp(ei.exp);
+                    if (vd._init)
+                        if (auto ei = vd._init.isExpInitializer())
+                            checkExp(ei.exp);
             }
         }
 
@@ -227,8 +238,6 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             {
                 // тело try
                 walkStmt(tc._body);
-                // для каждого catch просто спускаемся в handler —
-                // не считаем var автоматически использованной
                 if (tc.catches)
                     foreach (c; *tc.catches)
                         walkStmt(c.handler);
@@ -279,18 +288,25 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             foreach (sub; *cds.statements) collect(sub);
         else if (auto ss = s.isScopeStatement())
             collect(ss.statement);
-        else if (auto ifs = s.isIfStatement())      { collect(ifs.ifbody); collect(ifs.elsebody); }
-        else if (auto ws = s.isWhileStatement())    collect(ws._body);
-        else if (auto fs = s.isForStatement())      collect(fs._body);
+        else if (auto ifs = s.isIfStatement()) { collect(ifs.ifbody); collect(ifs.elsebody); }
+        else if (auto ws = s.isWhileStatement()) collect(ws._body);
+        else if (auto fs = s.isForStatement()) collect(fs._body);
         else if (auto frs = s.isForeachRangeStatement()) collect(frs._body);
-        else if (auto fes = s.isForeachStatement()) collect(fes._body);
+        else if (auto fes = s.isForeachStatement())
+        {
+            if (fes.key)     locals ~= fes.key;
+            if (fes.value)   locals ~= fes.value;
+            collect(fes._body);
+        }
         else if (auto tcs = s.isTryCatchStatement())
         {
             if (tcs.catches)
                 foreach (c; *tcs.catches)
-                    locals ~= c.var;
+                    if (c.var !is null)
+                        locals ~= c.var;
             collect(tcs._body);
-            foreach (c; *tcs.catches) collect(c.handler);
+            foreach (c; *tcs.catches)
+                collect(c.handler);
         }
         else if (auto tfs = s.isTryFinallyStatement()) { collect(tfs._body); collect(tfs.finalbody); }
         else if (auto sws = s.isSwitchStatement())
@@ -298,10 +314,11 @@ private void analyzeUnusedVariables(FuncDeclaration fd) @system
             foreach (c; *sws.cases) collect(c.statement);
             if (sws.sdefault) collect(sws.sdefault.statement);
         }
-        else if (auto cas = s.isCaseStatement())     collect(cas.statement);
-        else if (auto dfs = s.isDefaultStatement())  collect(dfs.statement);
+        else if (auto cas = s.isCaseStatement()) collect(cas.statement);
+        else if (auto dfs = s.isDefaultStatement()) collect(dfs.statement);
         else if (auto ul = s.isUnrolledLoopStatement()) foreach (sub; *ul.statements) collect(sub);
     }
+
 
     collect(fd.fbody);
     foreach (vd; locals)

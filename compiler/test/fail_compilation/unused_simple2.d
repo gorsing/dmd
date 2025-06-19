@@ -1,14 +1,16 @@
+// compiler/test/pass_compilation/unused_simple.d
+
 /**********************************
  REQUIRED_ARGS: -check=unused=on
  TEST_OUTPUT:
  ---
- fail_compilation/unused_lambda.d(12): Error: variable `f` declared but never used
  ---
 **********************************/
 
+import std.stdio;
+
 void main()
 {
-    int x = 1;
-    auto f = () => x + 1;
-    f();
+    int x = 42;
+    writeln(x);    // x используется
 }

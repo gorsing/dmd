@@ -2,7 +2,6 @@
  REQUIRED_ARGS: -check=unused=on
  TEST_OUTPUT:
  ---
-# никаких ошибок
  ---
 **********************************/
 

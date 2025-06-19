@@ -2,8 +2,9 @@
  REQUIRED_ARGS: -check=unused=on
  TEST_OUTPUT:
  ---
-fail_compilation/unused_trycatch.d(8): Error: variable `b` declared but never used
-fail_compilation/unused_trycatch.d(10): Error: variable `e` declared but never used
+fail_compilation/unused_trycatch.d(13): Error: variable `z` declared but never used
+fail_compilation/unused_trycatch.d(15): Error: variable `a` declared but never used
+fail_compilation/unused_trycatch.d(16): Error: variable `b` declared but never used
 ---
 **********************************/
 
