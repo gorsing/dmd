@@ -568,7 +568,7 @@ class Fiber : FiberBase
      *  fn must not be null.
      */
     this( void function() fn, size_t sz = pageSize * defaultStackPages,
-          size_t guardPageSize = pageSize ) nothrow
+          size_t guardPageSize = pageSize )
     {
         super( fn, sz, guardPageSize );
     }
@@ -590,7 +590,7 @@ class Fiber : FiberBase
      *  dg must not be null.
      */
     this( void delegate() dg, size_t sz = pageSize * defaultStackPages,
-          size_t guardPageSize = pageSize ) nothrow
+          size_t guardPageSize = pageSize )
     {
         super( dg, sz, guardPageSize );
     }

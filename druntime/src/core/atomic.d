@@ -85,14 +85,14 @@ enum MemoryOrder
  * Returns:
  *  The value of 'val'.
  */
-T atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)(auto ref return scope const T val) pure nothrow @nogc @trusted
+T atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)(auto ref return scope const T val) pure @trusted
     if (!is(T == shared U, U) && !is(T == shared inout U, U) && !is(T == shared const U, U))
 {
     return core.internal.atomic.atomicLoad!ms(cast(T*)&val);
 }
 
 /// Ditto
-T atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)(auto ref return scope shared const T val) pure nothrow @nogc @trusted
+T atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)(auto ref return scope shared const T val) @trusted
     if (!hasUnsharedIndirections!T)
 {
     import core.internal.traits : hasUnsharedIndirections;
@@ -121,7 +121,7 @@ TailShared!T atomicLoad(MemoryOrder ms = MemoryOrder.seq, T)(auto ref shared con
  *  val    = The target variable.
  *  newval = The value to store.
  */
-void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V)(ref T val, V newval) pure nothrow @nogc @trusted
+void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V)(ref T val, V newval) pure @trusted
     if (!is(T == shared) && !is(V == shared))
 {
     import core.internal.traits : hasElaborateCopyConstructor;
@@ -134,7 +134,7 @@ void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V)(ref T val, V newval) pu
 }
 
 /// Ditto
-void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V)(ref shared T val, V newval) pure nothrow @nogc @trusted
+void atomicStore(MemoryOrder ms = MemoryOrder.seq, T, V)(ref shared T val, V newval) @trusted
     if (!is(T == class))
 {
     static if (is (V == shared U, U))

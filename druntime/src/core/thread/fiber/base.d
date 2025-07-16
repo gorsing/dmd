@@ -220,7 +220,7 @@ class FiberBase
      * In:
      *  fn must not be null.
      */
-    this( void function() fn, size_t sz, size_t guardPageSize ) nothrow
+    this( void function() fn, size_t sz, size_t guardPageSize )
     in
     {
         assert( fn );
@@ -247,7 +247,7 @@ class FiberBase
      * In:
      *  dg must not be null.
      */
-    this( void delegate() dg, size_t sz, size_t guardPageSize ) nothrow
+    this( void delegate() dg, size_t sz, size_t guardPageSize )
     {
         allocStack( sz, guardPageSize );
         reset( cast(void delegate() const) dg );
@@ -385,14 +385,14 @@ class FiberBase
     }
 
     /// ditto
-    final void reset( void function() fn ) nothrow @nogc
+    final void reset( void function() fn )
     {
         reset();
         m_call  = fn;
     }
 
     /// ditto
-    final void reset( void delegate() dg ) nothrow @nogc
+    final void reset( void delegate() dg )
     {
         reset();
         m_call  = dg;

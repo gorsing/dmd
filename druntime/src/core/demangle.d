@@ -31,7 +31,7 @@ private int printf(Args...)(scope const char* fmt, scope const Args args)
 extern (C) alias CXX_DEMANGLER = char* function (const char* mangled_name,
                                                 char* output_buffer,
                                                 size_t* length,
-                                                int* status) nothrow pure @trusted;
+                                                int* status) @safe @nogc nothrow pure;
 
 private struct NoHooks
 {
@@ -3004,7 +3004,7 @@ CXX_DEMANGLER getCXXDemangler() nothrow @trusted
     if (__cxa_demangle is null)
     {
         static extern(C) char* _(const char* mangled_name, char* output_buffer,
-             size_t* length, int* status) nothrow pure @trusted
+             size_t* length, int* status) @trusted
         {
             *status = -1;
             return null;

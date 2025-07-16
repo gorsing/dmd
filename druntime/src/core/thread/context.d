@@ -11,6 +11,25 @@
 
 module core.thread.context;
 
+private template isCallable(alias F)
+{
+    enum isCallable = __traits(compiles, F());
+}
+
+private template isSafeFn(alias F)
+{
+    enum isSafeFn = __traits(compiles, () @safe { F(); });
+}
+
+private template isNothrow(alias F)
+{
+    enum isNothrow = __traits(compiles, () nothrow { F(); });
+}
+
+private template isNogc(alias F)
+{
+    enum isNogc = __traits(compiles, () @nogc { F(); });
+}
 struct StackContext
 {
     void* bstack, tstack;
@@ -25,41 +44,73 @@ struct StackContext
 
 struct Callable
 {
-    void opAssign(void function() fn) pure nothrow @nogc @safe
+    void opAssign(void function() fn) pure @trusted
     {
-        () @trusted { m_fn = fn; }();
-        m_type = Call.FN;
+        assignFunctionUnsafe(fn);
     }
-    void opAssign(void delegate() dg) pure nothrow @nogc @safe
+
+    void opAssign(void delegate() dg) pure @trusted
     {
-        () @trusted { m_dg = dg; }();
-        m_type = Call.DG;
+        assignDelegateUnsafe(dg);
     }
-    void opCall()
+
+    void opAssign(F)(F fn) pure @trusted
+        if (isCallable!fn && isSafeFn!fn && isNothrow!fn && isNogc!fn)
+    {
+        static if (is(F == void function()))
+            assignFunctionSafe(fn);
+        else static if (is(F == void delegate()))
+            assignDelegateSafe(fn);
+        else
+            static assert(0, "Unsupported callable type");
+    }
+
+    void opCall() @trusted nothrow @nogc
     {
         switch (m_type)
         {
-            case Call.FN:
-                m_fn();
-                break;
-            case Call.DG:
-                m_dg();
-                break;
-            default:
-                break;
+            case Call.FN: m_fn(); break;
+            case Call.DG: m_dg(); break;
+            default: assert(0, "Callable not initialized");
         }
     }
+
 private:
-    enum Call
-    {
-        NO,
-        FN,
-        DG
-    }
+    enum Call { NO, FN, DG }
     Call m_type = Call.NO;
+
     union
     {
-        void function() m_fn;
-        void delegate() m_dg;
+        void function() @safe nothrow @nogc m_fn;
+        void delegate() @safe nothrow @nogc m_dg;
+    }
+
+    @trusted pure nothrow @nogc
+    void assignFunctionSafe(void function() @safe nothrow @nogc fn)
+    {
+        m_fn = fn;
+        m_type = Call.FN;
+    }
+
+    @trusted pure nothrow @nogc
+    void assignDelegateSafe(void delegate() @safe nothrow @nogc dg)
+    {
+        m_dg = dg;
+        m_type = Call.DG;
+    }
+
+    @trusted pure
+    void assignFunctionUnsafe(void function() fn)
+    {
+        m_fn = cast(void function() @safe nothrow @nogc) fn;
+        m_type = Call.FN;
+    }
+
+    @trusted pure
+    void assignDelegateUnsafe(void delegate() dg)
+    {
+        m_dg = cast(void delegate() @safe nothrow @nogc) dg;
+        m_type = Call.DG;
     }
 }
+

@@ -158,7 +158,7 @@ version (DigitalMars)
             return *src;
     }
 
-    void atomicStore(MemoryOrder order = MemoryOrder.seq, T)(T* dest, T value) pure nothrow @nogc @trusted
+    void atomicStore(MemoryOrder order = MemoryOrder.seq, T)(T* dest, T value) pure @trusted
         if (CanCAS!T)
     {
         static assert(order != MemoryOrder.acq && order != MemoryOrder.acq_rel,

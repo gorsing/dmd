@@ -58,7 +58,7 @@ alias GCThreadInitFunction = void function(ThreadBase base) nothrow @nogc;
  *   $(LINK2 https://dlang.org/spec/garbage.html#gc_config, Configuring the Garbage Collector)
  */
 void registerGCFactory(string name, GCFactory factory,
-        GCThreadInitFunction threadInit = null) nothrow @nogc
+        GCThreadInitFunction threadInit = null)
 {
     import core.stdc.stdlib : realloc;
 

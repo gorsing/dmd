@@ -262,7 +262,7 @@ class Thread : ThreadBase
      * In:
      *  fn must not be null.
      */
-    this( void function() fn, size_t sz = 0 ) @safe pure nothrow @nogc
+    this( void function() fn, size_t sz = 0 ) @trusted pure
     {
         super(fn, sz);
     }
@@ -279,7 +279,7 @@ class Thread : ThreadBase
      * In:
      *  dg must not be null.
      */
-    this( void delegate() dg, size_t sz = 0 ) @safe pure nothrow @nogc
+    this( void delegate() dg, size_t sz = 0 ) @trusted pure
     {
         super(dg, sz);
     }
@@ -2616,7 +2616,7 @@ private
  *  is returned.
  */
 ThreadID createLowLevelThread(void delegate() nothrow dg, uint stacksize = 0,
-                              void delegate() nothrow cbDllUnload = null) nothrow @nogc
+                              void delegate() nothrow cbDllUnload = null) nothrow
 {
     void delegate() nothrow* context = cast(void delegate() nothrow*)malloc(dg.sizeof);
     *context = dg;

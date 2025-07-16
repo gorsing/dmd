@@ -515,6 +515,38 @@ private extern(C++) final class Semantic3Visitor : Visitor
                 }
             }
 
+            // Check that if the external function is @safe/@nogc/nothrow/pure,
+            // then any function parameters (@ptr or delegate) have the same attributes
+            if (funcdecl.parameters !is null)
+                foreach (VarDeclaration paramDecl; *funcdecl.parameters)
+                {
+                    auto pt = paramDecl.type.toBasetype();
+                    auto nxt = pt.nextOf();
+                    if (nxt is null)
+                        continue;
+                    auto tf = nxt.toBasetype().isTypeFunction();
+                    if (tf)
+                    {
+                        // f is your TypeFunction for the outer funcdecl:
+                        if (f.trust == TRUST.safe && tf.trust < TRUST.safe)
+                            error(paramDecl.loc,
+                                "parameter function `%s` must be `@safe` in a `@safe` function",
+                                paramDecl.ident.toChars());
+                        if (f.isNogc && !tf.isNogc)
+                            error(paramDecl.loc,
+                                "parameter function `%s` must be `@nogc` in a `@nogc` function",
+                                paramDecl.ident.toChars());
+                        if (f.isNothrow && !tf.isNothrow)
+                            error(paramDecl.loc,
+                                "parameter function `%s` must be `nothrow` in a `nothrow` function",
+                                paramDecl.ident.toChars());
+                        if (f.purity == PURE.const_ && tf.purity < PURE.const_)
+                            error(paramDecl.loc,
+                                "parameter function `%s` must be `pure` in a `pure` function",
+                                paramDecl.ident.toChars());
+                    }
+                }
+
             // Declare the tuple symbols and put them in the symbol table,
             // but not in parameters[].
             if (f.parameterList.parameters)

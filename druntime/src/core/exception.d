@@ -543,7 +543,7 @@ alias AssertHandler = void function(string file, size_t line, string msg) nothro
 }
 
 /// ditto
-@property void assertHandler(AssertHandler handler) @trusted nothrow @nogc
+@property void assertHandler(AssertHandler handler) @trusted
 {
     _assertHandler = handler;
 }
