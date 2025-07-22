@@ -1313,9 +1313,9 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         alias visit = Visitor.visit;
     public:
         MATCH result;
-        TemplateParameters parameters;
+        TemplateParameters* parameters;
 
-    extern (D) this(ref TemplateParameters parameters)
+    extern (D) this(TemplateParameters* parameters)
     {
         this.parameters = parameters;
         result = MATCH.nomatch;
@@ -1332,7 +1332,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             if (tparam.ty == Tident)
             {
                 // Determine which parameter tparam is
-                size_t i = templateParameterLookup(tparam, &this.parameters);
+                size_t i = templateParameterLookup(tparam, this.parameters);
                 if (i == IDX_NOTFOUND)
                 {
                     if (!sc)
@@ -2149,7 +2149,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         override void visit(Expression e)
         {
             //printf("Expression.deduceType(e = %s)\n", e.toChars());
-            size_t i = templateParameterLookup(tparam, &this.parameters);
+            size_t i = templateParameterLookup(tparam, this.parameters);
             if (i == IDX_NOTFOUND || tparam.isTypeIdentifier().idents.length > 0)
             {
                 if (e == emptyArrayElement && tparam.ty == Tarray)
