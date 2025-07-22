@@ -2107,12 +2107,12 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 while (s && s.baseclasses.length > 0)
                 {
                     // Test the base class
-                    deduceBaseClassParameters(*(*s.baseclasses)[0], sc, tparam, parameters, dedtypes, best, numBaseClassMatches);
+                    deduceBaseClassParameters(*(*s.baseclasses)[0], sc, tparam, *parameters, dedtypes, best, numBaseClassMatches);
 
                     // Test the interfaces inherited by the base class
                     foreach (b; s.interfaces)
                     {
-                        deduceBaseClassParameters(*b, sc, tparam, parameters, dedtypes, best, numBaseClassMatches);
+                        deduceBaseClassParameters(*b, sc, tparam, *parameters, dedtypes, best, numBaseClassMatches);
                     }
                     s = (*s.baseclasses)[0].sym;
                 }
@@ -2560,7 +2560,7 @@ private void deduceBaseClassParameters(ref BaseClass b, Scope* sc, Type tparam, 
         memcpy(tmpdedtypes.tdata(), dedtypes.tdata(), dedtypes.length * (void*).sizeof);
 
         auto t = new TypeInstance(Loc.initial, parti);
-        MATCH m = deduceType(t, sc, tparam, parameters, tmpdedtypes);
+        MATCH m = deduceType(t, sc, tparam, parameters, *tmpdedtypes);
         if (m > MATCH.nomatch)
         {
             // If this is the first ever match, it becomes our best estimate
