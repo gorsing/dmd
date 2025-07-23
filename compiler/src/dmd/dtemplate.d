@@ -792,7 +792,7 @@ extern (C++) final class TemplateDeclaration : ScopeDsymbol
 
         if (parameters.length > 0 && lastConstraintTiargs)
         {
-            formatParamsWithTiargs(parameters, *lastConstraintTiargs, isVariadic() !is null, buf);
+            formatParamsWithTiargs(*parameters, *lastConstraintTiargs, isVariadic() !is null, buf);
             buf.writenl();
         }
         if (!full)
@@ -975,7 +975,7 @@ extern (C++) final class TypeDeduced : Type
  * Given an identifier, figure out which TemplateParameter it is.
  * Return IDX_NOTFOUND if not found.
  */
-private size_t templateIdentifierLookup(Identifier id, TemplateParameters parameters)
+private size_t templateIdentifierLookup(Identifier id, ref TemplateParameters parameters)
 {
     foreach (i, tp; parameters)
     {
@@ -985,7 +985,7 @@ private size_t templateIdentifierLookup(Identifier id, TemplateParameters parame
     return IDX_NOTFOUND;
 }
 
-size_t templateParameterLookup(Type tparam, TemplateParameters parameters)
+size_t templateParameterLookup(Type tparam, ref TemplateParameters parameters)
 {
     if (TypeIdentifier tident = tparam.isTypeIdentifier())
     {
@@ -1313,7 +1313,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         MATCH result;
         TemplateParameters parameters;
 
-    extern (D) this(TemplateParameters parameters) @safe
+    extern (D) this(TemplateParameters parameters) nothrow @safe
     {
         this.parameters = parameters;
         result = MATCH.nomatch;
@@ -1681,7 +1681,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     edim = s ? getValue(s) : getValue(e);
                 }
             }
-            if ((tp && tp.matchArg(sc, t.dim, i, parameters, dedtypes, null)) ||
+            if ((tp && tp.matchArg(sc, t.dim, i, &parameters, dedtypes, null)) ||
                 (edim && edim.isIntegerExp() && edim.toInteger() == t.dim.toInteger())
             )
             {
@@ -1936,14 +1936,14 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 }
 
                 TemplateParameter tpx = parameters[i];
-                if (!tpx.matchArg(sc, tempdecl, i, parameters, dedtypes, null))
+                if (!tpx.matchArg(sc, tempdecl, i, &parameters, dedtypes, null))
                     goto Lnomatch;
             }
             else if (tempdecl != tp.tempinst.tempdecl)
                 goto Lnomatch;
 
         L2:
-            if (!resolveTemplateInstantiation(sc, parameters, t.tempinst.tiargs, &t.tempinst.tdtypes, tempdecl, tp, &dedtypes))
+            if (!resolveTemplateInstantiation(sc, &parameters, t.tempinst.tiargs, &t.tempinst.tdtypes, tempdecl, tp, &dedtypes))
                 goto Lnomatch;
 
             visit(cast(Type)t);
@@ -2631,9 +2631,9 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
         Type t2 = isType(o2);
         //printf("\ttest: o2 = %s\n", o2.toChars());
         size_t j = (t2 && t2.ty == Tident && i == tp.tempinst.tiargs.length - 1)
-            ? templateParameterLookup(t2, parameters) : IDX_NOTFOUND;
+            ? templateParameterLookup(t2, *parameters) : IDX_NOTFOUND;
         if (j != IDX_NOTFOUND && j == parameters.length - 1 &&
-            parameters[j].isTemplateTupleParameter())
+            (*parameters)[j].isTemplateTupleParameter())
         {
             /* Given:
                  *  struct A(B...) {}
@@ -2698,7 +2698,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
 
         if (t1 && t2)
         {
-            if (!deduceType(t1, sc, t2, parameters, *dedtypes))
+            if (!deduceType(t1, sc, t2, *parameters, *dedtypes))
                 return false;
         }
         else if (e1 && e2)
@@ -2714,7 +2714,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
                 /*
                      * (T:Number!(e2), int e2)
                      */
-                j = templateIdentifierLookup(e2.isVarExp().var.ident, parameters);
+                j = templateIdentifierLookup(e2.isVarExp().var.ident, *parameters);
                 if (j != IDX_NOTFOUND)
                     goto L1;
                 // The template parameter was not from this template
@@ -2739,7 +2739,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
         }
         else if (e1 && t2 && t2.ty == Tident)
         {
-            j = templateParameterLookup(t2, parameters);
+            j = templateParameterLookup(t2, *parameters);
         L1:
             if (j == IDX_NOTFOUND)
             {
@@ -2748,7 +2748,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
                     goto Le;
                 return false;
             }
-            if (!parameters[j].matchArg(sc, e1, j, parameters, *dedtypes, null))
+            if (!parameters[j].matchArg(sc, e1, j, &parameters, *dedtypes, null))
                 return false;
         }
         else if (s1 && s2)
@@ -2759,7 +2759,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
         }
         else if (s1 && t2 && t2.ty == Tident)
         {
-            j = templateParameterLookup(t2, parameters);
+            j = templateParameterLookup(t2, *parameters);
             if (j == IDX_NOTFOUND)
             {
                 t2.resolve((cast(TypeIdentifier)t2).loc, sc, e2, t2, s2);
@@ -2767,7 +2767,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
                     goto Ls;
                 return false;
             }
-            if (!parameters[j].matchArg(sc, s1, j, parameters, *dedtypes, null))
+            if (!parameters[j].matchArg(sc, s1, j, &parameters, *dedtypes, null))
                 return false;
         }
         else
