@@ -1325,9 +1325,9 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         alias visit = Visitor.visit;
     public:
         MATCH result;
-        TemplateParameters* parameters;
+        TemplateParameters parameters;
 
-    extern (D) this(TemplateParameters* parameters) @safe
+    extern (D) this(ref TemplateParameters parameters) @safe
     {
         this.parameters = parameters;
         result = MATCH.nomatch;
@@ -1362,11 +1362,11 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                      */
                     tparam = tparam.typeSemantic(loc, sc);
                     assert(tparam.ty != Tident);
-                    result = deduceType(t, sc, tparam, *parameters, dedtypes, wm);
+                    result = deduceType(t, sc, tparam, parameters, dedtypes, wm);
                     return;
                 }
 
-                TemplateParameter tp = (*parameters)[i];
+                TemplateParameter tp = parameters[i];
 
                 TypeIdentifier tident = tparam.isTypeIdentifier();
                 if (tident.idents.length > 0)
@@ -1564,7 +1564,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                             if (auto ato = t.aliasthisOf())
                             {
                                 tc.att = cast(AliasThisRec)(tc.att | AliasThisRec.tracingDT);
-                                m = deduceType(ato, sc, tparam, *parameters, dedtypes, wm);
+                                m = deduceType(ato, sc, tparam, parameters, dedtypes, wm);
                                 tc.att = cast(AliasThisRec)(tc.att & ~AliasThisRec.tracingDT);
                             }
                         }
@@ -1576,7 +1576,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                             if (auto ato = t.aliasthisOf())
                             {
                                 ts.att = cast(AliasThisRec)(ts.att | AliasThisRec.tracingDT);
-                                m = deduceType(ato, sc, tparam, *parameters, dedtypes, wm);
+                                m = deduceType(ato, sc, tparam, parameters, dedtypes, wm);
                                 ts.att = cast(AliasThisRec)(ts.att & ~AliasThisRec.tracingDT);
                             }
                         }
@@ -1602,7 +1602,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     tpn = tpn.substWildTo(MODFlags.mutable);
                 }
 
-                result = deduceType(t.nextOf(), sc, tpn, *parameters, dedtypes, wm);
+                result = deduceType(t.nextOf(), sc, tpn, parameters, dedtypes, wm);
                 return;
             }
 
@@ -1622,7 +1622,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         {
             if (auto tp = tparam.isTypeVector())
             {
-                result = deduceType(t.basetype, sc, tp.basetype, *parameters, dedtypes, wm);
+                result = deduceType(t.basetype, sc, tp.basetype, parameters, dedtypes, wm);
                 return;
             }
             visit(cast(Type)t);
@@ -1644,7 +1644,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
 
             if (tparam.ty == Tarray)
             {
-                MATCH m = deduceType(t.next, sc, tparam.nextOf(), *parameters, dedtypes, wm);
+                MATCH m = deduceType(t.next, sc, tparam.nextOf(), parameters, dedtypes, wm);
                 result = (m >= MATCH.constant) ? MATCH.convert : MATCH.nomatch;
                 return;
             }
@@ -1659,7 +1659,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     Identifier id = tsa.dim.isVarExp().var.ident;
                     i = templateIdentifierLookup(id, parameters);
                     assert(i != IDX_NOTFOUND);
-                    tp = (*parameters)[i];
+                    tp = parameters[i];
                 }
                 else
                     edim = tsa.dim;
@@ -1668,7 +1668,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             {
                 i = templateParameterLookup(taa.index, parameters);
                 if (i != IDX_NOTFOUND)
-                    tp = (*parameters)[i];
+                    tp = parameters[i];
                 else
                 {
                     Loc loc;
@@ -1677,7 +1677,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     // so we use that for the resolution (better error message).
                     if (inferStart < parameters.length)
                     {
-                        TemplateParameter loctp = (*parameters)[inferStart];
+                        TemplateParameter loctp = parameters[inferStart];
                         loc = loctp.loc;
                     }
 
@@ -1692,7 +1692,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 (edim && edim.isIntegerExp() && edim.toInteger() == t.dim.toInteger())
             )
             {
-                result = deduceType(t.next, sc, tparam.nextOf(), *parameters, dedtypes, wm);
+                result = deduceType(t.next, sc, tparam.nextOf(), parameters, dedtypes, wm);
                 return;
             }
 
@@ -1705,7 +1705,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             if (tparam && tparam.ty == Taarray)
             {
                 TypeAArray tp = tparam.isTypeAArray();
-                if (!deduceType(t.index, sc, tp.index, *parameters, dedtypes))
+                if (!deduceType(t.index, sc, tp.index, parameters, dedtypes))
                 {
                     result = MATCH.nomatch;
                     return;
@@ -1742,7 +1742,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
 
                 // https://issues.dlang.org/show_bug.cgi?id=15243
                 // Resolve parameter type if it's not related with template parameters
-                if (!reliesOnTemplateParameters(fparam.type, (*parameters)[inferStart .. parameters.length]))
+                if (!reliesOnTemplateParameters(fparam.type, parameters[inferStart .. parameters.length]))
                 {
                     auto tx = fparam.type.typeSemantic(Loc.initial, sc);
                     if (tx.ty == Terror)
@@ -1780,7 +1780,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 {
                     if (tupi == parameters.length)
                         goto L1;
-                    TemplateParameter tx = (*parameters)[tupi];
+                    TemplateParameter tx = parameters[tupi];
                     TemplateTupleParameter tup = tx.isTemplateTupleParameter();
                     if (tup && tup.ident.equals(tid.ident))
                         break;
@@ -1844,7 +1844,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 Parameter a = t.parameterList[i];
 
                 if (!a.isCovariant(t.isRef, ap) ||
-                    !deduceType(a.type, sc, ap.type, *parameters, dedtypes))
+                    !deduceType(a.type, sc, ap.type, parameters, dedtypes))
                 {
                     result = MATCH.nomatch;
                     return;
@@ -1942,7 +1942,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     goto Lnomatch;
                 }
 
-                TemplateParameter tpx = (*parameters)[i];
+                TemplateParameter tpx = parameters[i];
                 if (!tpx.matchArg(sc, tempdecl, i, parameters, dedtypes, null))
                     goto Lnomatch;
             }
@@ -1974,7 +1974,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 if (ti && ti.toAlias() == t.sym)
                 {
                     auto tx = new TypeInstance(Loc.initial, ti);
-                    auto m = deduceType(tx, sc, tparam, *parameters, dedtypes, wm);
+                    auto m = deduceType(tx, sc, tparam, parameters, dedtypes, wm);
                     // if we have a no match we still need to check alias this
                     if (m != MATCH.nomatch)
                     {
@@ -1998,7 +1998,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                             /* Slice off the .foo in S!(T).foo
                              */
                             tpi.idents.length--;
-                            result = deduceType(tparent, sc, tpi, *parameters, dedtypes, wm);
+                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
                             tpi.idents.length++;
                             return;
                         }
@@ -2038,7 +2038,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             Type tb = t.toBasetype();
             if (tb.ty == tparam.ty || tb.ty == Tsarray && tparam.ty == Taarray)
             {
-                result = deduceType(tb, sc, tparam, *parameters, dedtypes, wm);
+                result = deduceType(tb, sc, tparam, parameters, dedtypes, wm);
                 if (result == MATCH.exact)
                     result = MATCH.convert;
                 return;
@@ -2061,7 +2061,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 if (ti && ti.toAlias() == t.sym)
                 {
                     auto tx = new TypeInstance(Loc.initial, ti);
-                    MATCH m = deduceType(tx, sc, tparam, *parameters, dedtypes, wm);
+                    MATCH m = deduceType(tx, sc, tparam, parameters, dedtypes, wm);
                     // Even if the match fails, there is still a chance it could match
                     // a base class.
                     if (m != MATCH.nomatch)
@@ -2086,7 +2086,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                             /* Slice off the .foo in S!(T).foo
                              */
                             tpi.idents.length--;
-                            result = deduceType(tparent, sc, tpi, *parameters, dedtypes, wm);
+                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
                             tpi.idents.length++;
                             return;
                         }
@@ -2112,12 +2112,12 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 while (s && s.baseclasses.length > 0)
                 {
                     // Test the base class
-                    deduceBaseClassParameters(*(*s.baseclasses)[0], sc, tparam, *parameters, dedtypes, *best, numBaseClassMatches);
+                    deduceBaseClassParameters(*(*s.baseclasses)[0], sc, tparam, parameters, dedtypes, *best, numBaseClassMatches);
 
                     // Test the interfaces inherited by the base class
                     foreach (b; s.interfaces)
                     {
-                        deduceBaseClassParameters(*b, sc, tparam, *parameters, dedtypes, *best, numBaseClassMatches);
+                        deduceBaseClassParameters(*b, sc, tparam, parameters, dedtypes, *best, numBaseClassMatches);
                     }
                     s = (*s.baseclasses)[0].sym;
                 }
@@ -2162,14 +2162,14 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 if (e == emptyArrayElement && tparam.ty == Tarray)
                 {
                     Type tn = (cast(TypeNext)tparam).next;
-                    result = deduceType(emptyArrayElement, sc, tn, *parameters, dedtypes, wm);
+                    result = deduceType(emptyArrayElement, sc, tn, parameters, dedtypes, wm);
                     return;
                 }
                 e.type.accept(this);
                 return;
             }
 
-            TemplateTypeParameter tp = (*parameters)[i].isTemplateTypeParameter();
+            TemplateTypeParameter tp = parameters[i].isTemplateTypeParameter();
             if (!tp)
                 return; // nomatch
 
@@ -2325,7 +2325,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             assert(tparam.ty == Tarray);
 
             Type tn = (cast(TypeNext)tparam).next;
-            return deduceType(emptyArrayElement, sc, tn, *parameters, dedtypes, wm);
+            return deduceType(emptyArrayElement, sc, tn, parameters, dedtypes, wm);
         }
 
         override void visit(NullExp e)
@@ -2372,7 +2372,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 result = MATCH.exact;
                 if (e.basis)
                 {
-                    MATCH m = deduceType(e.basis, sc, tn, *parameters, dedtypes, wm);
+                    MATCH m = deduceType(e.basis, sc, tn, parameters, dedtypes, wm);
                     if (m < result)
                         result = m;
                 }
@@ -2382,7 +2382,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                         break;
                     if (!el)
                         continue;
-                    MATCH m = deduceType(el, sc, tn, *parameters, dedtypes, wm);
+                    MATCH m = deduceType(el, sc, tn, parameters, dedtypes, wm);
                     if (m < result)
                         result = m;
                 }
@@ -2407,12 +2407,12 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 result = MATCH.exact;
                 foreach (i, key; *e.keys)
                 {
-                    MATCH m1 = deduceType(key, sc, taa.index, *parameters, dedtypes, wm);
+                    MATCH m1 = deduceType(key, sc, taa.index, parameters, dedtypes, wm);
                     if (m1 < result)
                         result = m1;
                     if (result == MATCH.nomatch)
                         break;
-                    MATCH m2 = deduceType((*e.values)[i], sc, taa.next, *parameters, dedtypes, wm);
+                    MATCH m2 = deduceType((*e.values)[i], sc, taa.next, parameters, dedtypes, wm);
                     if (m2 < result)
                         result = m2;
                     if (result == MATCH.nomatch)
@@ -2462,7 +2462,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     if (!pto)
                         break;
                     Type t = pto.type.syntaxCopy(); // https://issues.dlang.org/show_bug.cgi?id=11774
-                    if (reliesOnTemplateParameters(t, (*parameters)[inferStart .. parameters.length]))
+                    if (reliesOnTemplateParameters(t, parameters[inferStart .. parameters.length]))
                         return;
                     t = t.typeSemantic(e.loc, sc);
                     if (t.ty == Terror)
@@ -2526,7 +2526,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         }
     }
 
-    scope DeduceType v = new DeduceType(&parameters);
+    scope DeduceType v = new DeduceType(parameters);
     if (Type t = isType(o))
         t.accept(v);
     else if (Expression e = isExpression(o))
@@ -2642,7 +2642,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
         size_t j = (t2 && t2.ty == Tident && i == tp.tempinst.tiargs.length - 1)
             ? templateParameterLookup(t2, parameters) : IDX_NOTFOUND;
         if (j != IDX_NOTFOUND && j == parameters.length - 1 &&
-            (*parameters)[j].isTemplateTupleParameter())
+            parameters[j].isTemplateTupleParameter())
         {
             /* Given:
                  *  struct A(B...) {}
@@ -2707,7 +2707,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
 
         if (t1 && t2)
         {
-            if (!deduceType(t1, sc, t2, *parameters, *dedtypes))
+            if (!deduceType(t1, sc, t2, parameters, *dedtypes))
                 return false;
         }
         else if (e1 && e2)
@@ -2757,7 +2757,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
                     goto Le;
                 return false;
             }
-            if (!(*parameters)[j].matchArg(sc, e1, j, parameters, *dedtypes, null))
+            if (!parameters[j].matchArg(sc, e1, j, parameters, *dedtypes, null))
                 return false;
         }
         else if (s1 && s2)
@@ -2776,7 +2776,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
                     goto Ls;
                 return false;
             }
-            if (!(*parameters)[j].matchArg(sc, s1, j, parameters, *dedtypes, null))
+            if (!parameters[j].matchArg(sc, s1, j, parameters, *dedtypes, null))
                 return false;
         }
         else
