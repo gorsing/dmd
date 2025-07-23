@@ -60,7 +60,7 @@ private extern (C++) final class TemplateParameterSemanticVisitor : Visitor
     override void visit(TemplateTypeParameter ttp)
     {
         //printf("TemplateTypeParameter.semantic('%s')\n", ident.toChars());
-        if (ttp.specType && !reliesOnTident(ttp.specType, parameters))
+        if (ttp.specType && !reliesOnTident(ttp.specType, *parameters))
         {
             ttp.specType = ttp.specType.typeSemantic(ttp.loc, sc);
         }
@@ -120,7 +120,7 @@ private extern (C++) final class TemplateParameterSemanticVisitor : Visitor
 
     override void visit(TemplateAliasParameter tap)
     {
-        if (tap.specType && !reliesOnTident(tap.specType, parameters))
+        if (tap.specType && !reliesOnTident(tap.specType, *parameters))
         {
             tap.specType = tap.specType.typeSemantic(tap.loc, sc);
         }
@@ -165,7 +165,7 @@ RootObject aliasParameterSemantic(Loc loc, Scope* sc, RootObject o, TemplatePara
         return ea.ctfeInterpret();
     }
     Type ta = isType(o);
-    if (ta && (!parameters || !reliesOnTident(ta, parameters)))
+    if (ta && (!parameters || !reliesOnTident(ta, *parameters)))
     {
         Dsymbol s = ta.toDsymbol(sc);
         if (s)
