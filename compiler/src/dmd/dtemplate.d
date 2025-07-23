@@ -976,18 +976,18 @@ extern (C++) final class TypeDeduced : Type
  * Given an identifier, figure out which TemplateParameter it is.
  * Return IDX_NOTFOUND if not found.
  */
-private size_t templateIdentifierLookup(Identifier id, TemplateParameters* parameters)
+private size_t templateIdentifierLookup(Identifier id, ref TemplateParameters parameters)
 {
     for (size_t i = 0; i < parameters.length; i++)
     {
-        TemplateParameter tp = (*parameters)[i];
+        TemplateParameter tp = parameters[i];
         if (tp.ident.equals(id))
             return i;
     }
     return IDX_NOTFOUND;
 }
 
-size_t templateParameterLookup(Type tparam, TemplateParameters* parameters)
+size_t templateParameterLookup(Type tparam, ref TemplateParameters parameters)
 {
     if (TypeIdentifier tident = tparam.isTypeIdentifier())
     {
@@ -1344,7 +1344,9 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             if (tparam.ty == Tident)
             {
                 // Determine which parameter tparam is
-                size_t i = templateParameterLookup(tparam, this.parameters);
+
+                size_t i = templateParameterLookup(tparam, parameters);
+              
                 if (i == IDX_NOTFOUND)
                 {
                     if (!sc)
@@ -2152,7 +2154,9 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
         override void visit(Expression e)
         {
             //printf("Expression.deduceType(e = %s)\n", e.toChars());
-            size_t i = templateParameterLookup(tparam, this.parameters);
+
+            size_t i = templateParameterLookup(tparam, parameters);
+
             if (i == IDX_NOTFOUND || tparam.isTypeIdentifier().idents.length > 0)
             {
                 if (e == emptyArrayElement && tparam.ty == Tarray)
