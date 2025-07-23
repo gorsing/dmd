@@ -1317,7 +1317,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
     {
         Loc loc;
         if (parameters.length)
-            loc = (*parameters)[0].loc;
+            loc = parameters[0].loc;
         return loc;
     }
     extern (C++) final class DeduceType : Visitor
