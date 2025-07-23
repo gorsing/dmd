@@ -1308,6 +1308,18 @@ __gshared Expression emptyArrayElement = null;
  */
 MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters parameters, ref Objects dedtypes, uint* wm = null, size_t inferStart = 0, bool ignoreAliasThis = false)
 {
+    /**
+     * Returns a valid `Loc` for semantic routines.
+     * Some paths require a location derived from the first
+     * template parameter when available.
+     */
+    Loc semanticLoc()
+    {
+        Loc loc;
+        if (parameters.length)
+            loc = (*parameters)[0].loc;
+        return loc;
+    }
     extern (C++) final class DeduceType : Visitor
     {
         alias visit = Visitor.visit;
@@ -1338,14 +1350,10 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                     if (!sc)
                         goto Lnomatch;
 
-                    /* Need a loc to go with the semantic routine.
+                    /* Use the first template parameter's location
+                     * for semantic analysis when available.
                      */
-                    Loc loc;
-                    if (parameters.length)
-                    {
-                        TemplateParameter tp = (*parameters)[0];
-                        loc = tp.loc;
-                    }
+                    Loc loc = semanticLoc();
 
                     /* BUG: what if tparam is a template instance, that
                      * has as an argument another Tident?
@@ -1530,15 +1538,10 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
 
             if (tparam.ty == Ttypeof)
             {
-                /* Need a loc to go with the semantic routine.
+                /* Use the first template parameter's location
+                 * for semantic analysis when available.
                  */
-                Loc loc;
-                if (parameters.length)
-                {
-                    TemplateParameter tp = (*parameters)[0];
-                    loc = tp.loc;
-                }
-
+                Loc loc = semanticLoc();
                 tparam = tparam.typeSemantic(loc, sc);
             }
             if (t.ty != tparam.ty)
