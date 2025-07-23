@@ -383,7 +383,7 @@ MATCH matchWithInstance(Scope* sc, TemplateDeclaration td, TemplateInstance ti, 
                     oarg = (*ti.tiargs)[i];
                 else
                     oarg = null;
-                tp.print(oarg, (*dedtypes)[i]);
+                tp.print(oarg, dedtypes[i]);
             }
         }
         else
@@ -796,7 +796,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
         {
             assert(i < td.parameters.length);
             Declaration sparam = null;
-            MATCH m = (*td.parameters)[i].matchArg(instLoc, paramscope, dedargs, i, td.parameters, *dedtypes, &sparam);
+            MATCH m = (*td.parameters)[i].matchArg(instLoc, paramscope, dedargs, i, td.parameters, dedtypes, &sparam);
             //printf("\tdeduceType m = %d\n", m);
             if (m == MATCH.nomatch)
                 return nomatch();
@@ -894,7 +894,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                 hasttp = true;
 
                 Type t = new TypeIdentifier(Loc.initial, ttp.ident);
-                MATCH m = deduceType(tthis, paramscope, t, *td.parameters, *dedtypes);
+                MATCH m = deduceType(tthis, paramscope, t, td.parameters, dedtypes);
                 if (m == MATCH.nomatch)
                     return nomatch();
                 if (m < match)
@@ -1141,7 +1141,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                  */
                 if (argi == fargs.length)
                 {
-                    foreach (ref dedtype; *dedtypes)
+                    foreach (ref dedtype; dedtypes)
                     {
                         Type at = isType(dedtype);
                         if (at && at.ty == Tnone)
@@ -1155,7 +1155,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                         TemplateParameter tparam = (*td.parameters)[i];
 
                         RootObject oarg = (*dedargs)[i];
-                        RootObject oded = (*dedtypes)[i];
+                        RootObject oded = dedtypes[i];
                         if (oarg)
                             continue;
 
@@ -1167,13 +1167,13 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                                  * the oded == oarg
                                  */
                                 (*dedargs)[i] = oded;
-                                MATCH m2 = tparam.matchArg(instLoc, paramscope, dedargs, i, td.parameters, *dedtypes, null);
+                                MATCH m2 = tparam.matchArg(instLoc, paramscope, dedargs, i, td.parameters, dedtypes, null);
                                 //printf("m2 = %d\n", m2);
                                 if (m2 == MATCH.nomatch)
                                     return nomatch();
                                 if (m2 < matchTiargs)
                                     matchTiargs = m2; // pick worst match
-                                if (!(*dedtypes)[i].equals(oded))
+                                if (!dedtypes[i].equals(oded))
                                     .error(td.loc, "%s `%s` specialization not allowed for deduced parameter `%s`",
                                         td.kind, td.toPrettyChars, td.kind, td.toPrettyChars, tparam.ident.toChars());
                             }
@@ -1292,7 +1292,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                 }
                 else if ((fparam.storageClass & STC.out_) == 0 &&
                          (argtype.ty == Tarray || argtype.ty == Tpointer) &&
-                        templateParameterLookup(prmtype, *td.parameters) != IDX_NOTFOUND &&
+                        templateParameterLookup(prmtype, td.parameters) != IDX_NOTFOUND &&
                          prmtype.isTypeIdentifier().idents.length == 0)
                 {
                     /* The farg passing to the prmtype always make a copy. Therefore,
@@ -1318,7 +1318,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                     goto Lvarargs;
 
                 uint im = 0;
-                MATCH m = deduceType(oarg, paramscope, prmtype, *td.parameters, *dedtypes, &im, inferStart);
+                MATCH m = deduceType(oarg, paramscope, prmtype, td.parameters, dedtypes, &im, inferStart);
                 //printf("\tL%d deduceType m = %d, im = x%x, inoutMatch = x%x\n", __LINE__, m, im, inoutMatch);
                 inoutMatch |= im;
 
@@ -1420,7 +1420,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                     {
                         Expression dim = new IntegerExp(instLoc, fargs.length - argi, Type.tsize_t);
 
-                        size_t i = templateParameterLookup(taa.index, *td.parameters);
+                        size_t i = templateParameterLookup(taa.index, td.parameters);
                         if (i == IDX_NOTFOUND)
                         {
                             Expression e;
@@ -1459,7 +1459,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                             TemplateValueParameter tvp = tprm.isTemplateValueParameter();
                             if (!tvp)
                                 return nomatch();
-                            Expression e = cast(Expression)(*dedtypes)[i];
+                            Expression e = cast(Expression)dedtypes[i];
                             if (e)
                             {
                                 if (!dim.equals(e))
@@ -1471,7 +1471,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                                 MATCH m = dim.implicitConvTo(vt);
                                 if (m == MATCH.nomatch)
                                     return nomatch();
-                                (*dedtypes)[i] = dim;
+                                dedtypes[i] = dim;
                             }
                         }
                     }
@@ -1509,7 +1509,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
                         else
                         {
                             uint wm = 0;
-                            m = deduceType(arg, paramscope, ta.next, *td.parameters, *dedtypes, &wm, inferStart);
+                            m = deduceType(arg, paramscope, ta.next, td.parameters, dedtypes, &wm, inferStart);
                             inoutMatch |= wm;
                         }
                         if (m == MATCH.nomatch)
@@ -1534,7 +1534,7 @@ extern (D) MATCHpair deduceFunctionTemplateMatch(TemplateDeclaration td, Templat
     }
 
 Lmatch:
-    foreach (ref dedtype; *dedtypes)
+    foreach (ref dedtype; dedtypes)
     {
         if (Type at = isType(dedtype))
         {
@@ -1555,7 +1555,7 @@ Lmatch:
          * But for function templates, we really need them to match
          */
         RootObject oarg = (*dedargs)[i];
-        RootObject oded = (*dedtypes)[i];
+        RootObject oded = dedtypes[i];
         //printf("1dedargs[%d] = %p, dedtypes[%d] = %p\n", i, oarg, i, oded);
         //if (oarg) printf("oarg: %s\n", oarg.toChars());
         //if (oded) printf("oded: %s\n", oded.toChars());
@@ -1570,13 +1570,13 @@ Lmatch:
                  * the oded == oarg
                  */
                 (*dedargs)[i] = oded;
-                MATCH m2 = tparam.matchArg(instLoc, paramscope, dedargs, i, td.parameters, *dedtypes, null);
+                MATCH m2 = tparam.matchArg(instLoc, paramscope, dedargs, i, td.parameters, dedtypes, null);
                 //printf("m2 = %d\n", m2);
                 if (m2 == MATCH.nomatch)
                     return nomatch();
                 if (m2 < matchTiargs)
                     matchTiargs = m2; // pick worst match
-                if (!(*dedtypes)[i].equals(oded))
+                if (!dedtypes[i].equals(oded))
                     .error(td.loc, "%s `%s` specialization not allowed for deduced parameter `%s`", td.kind, td.toPrettyChars, tparam.ident.toChars());
             }
             else
@@ -1617,13 +1617,13 @@ Lmatch:
             if (tparam.specialization())
             {
                 (*dedargs)[i] = oded;
-                MATCH m2 = tparam.matchArg(instLoc, paramscope, dedargs, i, td.parameters, *dedtypes, null);
+                MATCH m2 = tparam.matchArg(instLoc, paramscope, dedargs, i, td.parameters, dedtypes, null);
                 //printf("m2 = %d\n", m2);
                 if (m2 == MATCH.nomatch)
                     return nomatch();
                 if (m2 < matchTiargs)
                     matchTiargs = m2; // pick worst match
-                if (!(*dedtypes)[i].equals(oded))
+                if (!dedtypes[i].equals(oded))
                     .error(td.loc, "%s `%s` specialization not allowed for deduced parameter `%s`", td.kind, td.toPrettyChars, tparam.ident.toChars());
             }
         }
