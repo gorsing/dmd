@@ -1315,6 +1315,38 @@ private Loc semanticLoc(scope ref TemplateParameters parameters)
     return loc;
 }
 
+private MATCH deduceAliasThis(Type t, Scope* sc, Type tparam,
+    ref TemplateParameters parameters, ref Objects dedtypes, uint* wm)
+{
+    if (auto tc = t.isTypeClass())
+    {
+        if (tc.sym.aliasthis && !(tc.att & AliasThisRec.tracingDT))
+        {
+            if (auto ato = t.aliasthisOf())
+            {
+                tc.att = cast(AliasThisRec)(tc.att | AliasThisRec.tracingDT);
+                auto m = deduceType(ato, sc, tparam, parameters, dedtypes, wm);
+                tc.att = cast(AliasThisRec)(tc.att & ~AliasThisRec.tracingDT);
+                return m;
+            }
+        }
+    }
+    else if (auto ts = t.isTypeStruct())
+    {
+        if (ts.sym.aliasthis && !(ts.att & AliasThisRec.tracingDT))
+        {
+            if (auto ato = t.aliasthisOf())
+            {
+                ts.att = cast(AliasThisRec)(ts.att | AliasThisRec.tracingDT);
+                auto m = deduceType(ato, sc, tparam, parameters, dedtypes, wm);
+                ts.att = cast(AliasThisRec)(ts.att & ~AliasThisRec.tracingDT);
+                return m;
+            }
+        }
+    }
+    return MATCH.nomatch;
+}
+
 /* These form the heart of template argument deduction.
  * Given 'this' being the type argument to the template instance,
  * it is matched against the template declaration parameter specialization
@@ -1563,30 +1595,7 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
                 MATCH m = t.implicitConvTo(tparam);
                 if (m == MATCH.nomatch && !ignoreAliasThis)
                 {
-                    if (auto tc = t.isTypeClass())
-                    {
-                        if (tc.sym.aliasthis && !(tc.att & AliasThisRec.tracingDT))
-                        {
-                            if (auto ato = t.aliasthisOf())
-                            {
-                                tc.att = cast(AliasThisRec)(tc.att | AliasThisRec.tracingDT);
-                                m = deduceType(ato, sc, tparam, parameters, dedtypes, wm);
-                                tc.att = cast(AliasThisRec)(tc.att & ~AliasThisRec.tracingDT);
-                            }
-                        }
-                    }
-                    else if (auto ts = t.isTypeStruct())
-                    {
-                        if (ts.sym.aliasthis && !(ts.att & AliasThisRec.tracingDT))
-                        {
-                            if (auto ato = t.aliasthisOf())
-                            {
-                                ts.att = cast(AliasThisRec)(ts.att | AliasThisRec.tracingDT);
-                                m = deduceType(ato, sc, tparam, parameters, dedtypes, wm);
-                                ts.att = cast(AliasThisRec)(ts.att & ~AliasThisRec.tracingDT);
-                            }
-                        }
-                    }
+                    m = deduceAliasThis(t, sc, tparam, parameters, dedtypes, wm);
                 }
                 result = m;
                 return;
