@@ -1079,7 +1079,7 @@ private Type rawTypeMerge(Type t1, Type t2)
     return null;
 }
 
-MATCH deduceTypeHelper(Type t, out Type at, Type tparam)
+package MATCH deduceTypeHelper(scope Type t, out Type at, scope Type tparam)
 {
     // 9*9 == 81 cases
     switch (X(tparam.mod, t.mod))
@@ -1329,7 +1329,7 @@ private Loc semanticLoc(scope ref TemplateParameters parameters)
  * Output:
  *      dedtypes = [ int ]      // Array of Expression/Type's
  */
-MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
+package MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
     scope ref TemplateParameters parameters, scope ref Objects dedtypes,
     scope uint* wm = null, size_t inferStart = 0, bool ignoreAliasThis = false)
 {
@@ -2552,7 +2552,9 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
  * If a match occurs, numBaseClassMatches is incremented, and the new deduced
  * types are ANDed with the current 'best' estimate for dedtypes.
  */
-private void deduceBaseClassParameters(ref BaseClass b, Scope* sc, Type tparam, ref TemplateParameters parameters, ref Objects dedtypes, ref Objects best, ref int numBaseClassMatches)
+private void deduceBaseClassParameters(ref BaseClass b, scope Scope* sc, scope Type tparam,
+    scope ref TemplateParameters parameters, scope ref Objects dedtypes, scope ref Objects best,
+    scope ref int numBaseClassMatches)
 {
     if (TemplateInstance parti = b.sym ? b.sym.parent.isTemplateInstance() : null)
     {
@@ -2602,7 +2604,9 @@ private void deduceBaseClassParameters(ref BaseClass b, Scope* sc, Type tparam, 
  * Output:
  *    dedtypes         = deduced params of `foo(Temp!(int, 3)())` -> [int]
  */
-private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* parameters, Objects* tiargs, Objects* tdtypes, TemplateDeclaration tempdecl, TypeInstance tp, Objects* dedtypes)
+private bool resolveTemplateInstantiation(scope Scope* sc, scope TemplateParameters* parameters,
+    scope Objects* tiargs, scope Objects* tdtypes, scope TemplateDeclaration tempdecl,
+    scope TypeInstance tp, scope Objects* dedtypes)
 {
     for (size_t i = 0; 1; i++)
     {
@@ -2788,7 +2792,7 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
  *      iStart      = Start index of tparams to limit the tested parameters. If it's
  *                    nonzero, tparams[0..iStart] will be excluded from the test target.
  */
-bool reliesOnTident(Type t, TemplateParameters* tparams, size_t iStart = 0)
+package bool reliesOnTident(scope Type t, scope TemplateParameters* tparams, size_t iStart = 0)
 {
     return reliesOnTemplateParameters(t, (*tparams)[0 .. tparams.length]);
 }
@@ -2799,7 +2803,7 @@ bool reliesOnTident(Type t, TemplateParameters* tparams, size_t iStart = 0)
  *      t           = Tested type, if null, returns false.
  *      tparams     = Template parameters.
  */
-bool reliesOnTemplateParameters(Type t, TemplateParameter[] tparams)
+private bool reliesOnTemplateParameters(scope Type t, scope TemplateParameter[] tparams)
 {
     bool visitVector(TypeVector t)
     {
@@ -2897,7 +2901,7 @@ bool reliesOnTemplateParameters(Type t, TemplateParameter[] tparams)
  * Returns:
  *      true if it does
  */
-private bool reliesOnTemplateParameters(Expression e, TemplateParameter[] tparams)
+private bool reliesOnTemplateParameters(scope Expression e, scope TemplateParameter[] tparams)
 {
     extern (C++) final class ReliesOnTemplateParameters : Visitor
     {
