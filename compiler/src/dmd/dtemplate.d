@@ -1978,48 +1978,8 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
 
         override void visit(TypeStruct t)
         {
-            /* If this struct is a template struct, and we're matching
-             * it against a template instance, convert the struct type
-             * to a template instance, too, and try again.
-             */
-            TemplateInstance ti = t.sym.parent.isTemplateInstance();
-
-            if (tparam && tparam.ty == Tinstance)
-            {
-                if (ti && ti.toAlias() == t.sym)
-                {
-                    auto tx = new TypeInstance(Loc.initial, ti);
-                    auto m = deduceType(tx, sc, tparam, parameters, dedtypes, wm);
-                    // if we have a no match we still need to check alias this
-                    if (m != MATCH.nomatch)
-                    {
-                        result = m;
-                        return;
-                    }
-                }
-
-                /* Match things like:
-                 *  S!(T).foo
-                 */
-                TypeInstance tpi = tparam.isTypeInstance();
-                if (tpi.idents.length)
-                {
-                    RootObject id = tpi.idents[tpi.idents.length - 1];
-                    if (id.dyncast() == DYNCAST.identifier && t.sym.ident.equals(cast(Identifier)id))
-                    {
-                        Type tparent = t.sym.parent.getType();
-                        if (tparent)
-                        {
-                            /* Slice off the .foo in S!(T).foo
-                             */
-                            tpi.idents.length--;
-                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
-                            tpi.idents.length++;
-                            return;
-                        }
-                    }
-                }
-            }
+            if (matchParentTemplateInstance(t.sym))
+                return;
 
             // Extra check
             if (tparam && tparam.ty == Tstruct)
@@ -2065,48 +2025,8 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
         {
             //printf("TypeClass.deduceType(this = %s)\n", t.toChars());
 
-            /* If this class is a template class, and we're matching
-             * it against a template instance, convert the class type
-             * to a template instance, too, and try again.
-             */
-            TemplateInstance ti = t.sym.parent.isTemplateInstance();
-
-            if (tparam && tparam.ty == Tinstance)
-            {
-                if (ti && ti.toAlias() == t.sym)
-                {
-                    auto tx = new TypeInstance(Loc.initial, ti);
-                    MATCH m = deduceType(tx, sc, tparam, parameters, dedtypes, wm);
-                    // Even if the match fails, there is still a chance it could match
-                    // a base class.
-                    if (m != MATCH.nomatch)
-                    {
-                        result = m;
-                        return;
-                    }
-                }
-
-                /* Match things like:
-                 *  S!(T).foo
-                 */
-                TypeInstance tpi = tparam.isTypeInstance();
-                if (tpi.idents.length)
-                {
-                    RootObject id = tpi.idents[tpi.idents.length - 1];
-                    if (id.dyncast() == DYNCAST.identifier && t.sym.ident.equals(cast(Identifier)id))
-                    {
-                        Type tparent = t.sym.parent.getType();
-                        if (tparent)
-                        {
-                            /* Slice off the .foo in S!(T).foo
-                             */
-                            tpi.idents.length--;
-                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
-                            tpi.idents.length++;
-                            return;
-                        }
-                    }
-                }
+            if (matchParentTemplateInstance(t.sym))
+                return;
 
                 // If it matches exactly or via implicit conversion, we're done
                 visit(cast(Type)t);
@@ -2329,6 +2249,43 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
 
             Type tn = (cast(TypeNext)tparam).next;
             return deduceType(emptyArrayElement, sc, tn, parameters, dedtypes, wm);
+        }
+
+        private bool matchParentTemplateInstance(Dsymbol sym)
+        {
+            if (!tparam || tparam.ty != Tinstance)
+                return false;
+
+            if (auto ti = sym.parent.isTemplateInstance())
+            {
+                if (ti.toAlias() == sym)
+                {
+                    auto tx = new TypeInstance(Loc.initial, ti);
+                    auto m = deduceType(tx, sc, tparam, parameters, dedtypes, wm);
+                    if (m != MATCH.nomatch)
+                    {
+                        result = m;
+                        return true;
+                    }
+                }
+
+                auto tpi = tparam.isTypeInstance();
+                if (tpi.idents.length)
+                {
+                    RootObject id = tpi.idents[tpi.idents.length - 1];
+                    if (id.dyncast() == DYNCAST.identifier && sym.ident.equals(cast(Identifier)id))
+                    {
+                        if (Type tparent = sym.parent.getType())
+                        {
+                            tpi.idents.length--;
+                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
+                            tpi.idents.length++;
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         override void visit(NullExp e)
