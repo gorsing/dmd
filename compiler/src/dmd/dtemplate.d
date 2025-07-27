@@ -1347,6 +1347,27 @@ private MATCH deduceAliasThis(Type t, Scope* sc, Type tparam,
     return MATCH.nomatch;
 }
 
+private MATCH deduceParentInstance(Scope* sc, Dsymbol sym, TypeInstance tpi,
+    ref TemplateParameters parameters, ref Objects dedtypes, uint* wm)
+{
+    if (tpi.idents.length)
+    {
+        RootObject id = tpi.idents[tpi.idents.length - 1];
+        if (id.dyncast() == DYNCAST.identifier && sym.ident.equals(cast(Identifier)id))
+        {
+            Type tparent = sym.parent.getType();
+            if (tparent)
+            {
+                tpi.idents.length--;
+                auto m = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
+                tpi.idents.length++;
+                return m;
+            }
+        }
+    }
+    return MATCH.nomatch;
+}
+
 /* These form the heart of template argument deduction.
  * Given 'this' being the type argument to the template instance,
  * it is matched against the template declaration parameter specialization
@@ -1998,26 +2019,12 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
                     }
                 }
 
-                /* Match things like:
-                 *  S!(T).foo
-                 */
                 TypeInstance tpi = tparam.isTypeInstance();
-                if (tpi.idents.length)
+                auto m = deduceParentInstance(sc, t.sym, tpi, parameters, dedtypes, wm);
+                if (m != MATCH.nomatch)
                 {
-                    RootObject id = tpi.idents[tpi.idents.length - 1];
-                    if (id.dyncast() == DYNCAST.identifier && t.sym.ident.equals(cast(Identifier)id))
-                    {
-                        Type tparent = t.sym.parent.getType();
-                        if (tparent)
-                        {
-                            /* Slice off the .foo in S!(T).foo
-                             */
-                            tpi.idents.length--;
-                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
-                            tpi.idents.length++;
-                            return;
-                        }
-                    }
+                    result = m;
+                    return;
                 }
             }
 
@@ -2086,26 +2093,12 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
                     }
                 }
 
-                /* Match things like:
-                 *  S!(T).foo
-                 */
                 TypeInstance tpi = tparam.isTypeInstance();
-                if (tpi.idents.length)
+                auto m = deduceParentInstance(sc, t.sym, tpi, parameters, dedtypes, wm);
+                if (m != MATCH.nomatch)
                 {
-                    RootObject id = tpi.idents[tpi.idents.length - 1];
-                    if (id.dyncast() == DYNCAST.identifier && t.sym.ident.equals(cast(Identifier)id))
-                    {
-                        Type tparent = t.sym.parent.getType();
-                        if (tparent)
-                        {
-                            /* Slice off the .foo in S!(T).foo
-                             */
-                            tpi.idents.length--;
-                            result = deduceType(tparent, sc, tpi, parameters, dedtypes, wm);
-                            tpi.idents.length++;
-                            return;
-                        }
-                    }
+                    result = m;
+                    return;
                 }
 
                 // If it matches exactly or via implicit conversion, we're done
