@@ -1291,6 +1291,17 @@ MATCH deduceTypeHelper(Type t, out Type at, Type tparam)
 
 __gshared Expression emptyArrayElement = null;
 
+/*
+ * Returns `true` if `t` is a reference type, or an array of reference types.
+ */
+private bool isTopRef(Type t)
+{
+    auto tb = t.baseElemOf();
+    return tb.ty == Tclass ||
+           tb.ty == Taarray ||
+           tb.ty == Tstruct && tb.hasPointers();
+}
+
 /* These form the heart of template argument deduction.
  * Given 'this' being the type argument to the template instance,
  * it is matched against the template declaration parameter specialization
@@ -2177,16 +2188,6 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                 }
             }
 
-            /* Returns `true` if `t` is a reference type, or an array of reference types
-             */
-            bool isTopRef(Type t)
-            {
-                auto tb = t.baseElemOf();
-                return tb.ty == Tclass ||
-                       tb.ty == Taarray ||
-                       tb.ty == Tstruct && tb.hasPointers();
-            }
-
             Type at = cast(Type)dedtypes[i];
             Type tt;
             if (ubyte wx = deduceWildHelper(e.type, &tt, tparam))
@@ -2305,7 +2306,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             result = MATCH.nomatch;
         }
 
-        MATCH deduceEmptyArrayElement()
+        private MATCH deduceEmptyArrayElement()
         {
             if (!emptyArrayElement)
             {
