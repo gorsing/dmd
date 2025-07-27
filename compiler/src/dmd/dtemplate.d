@@ -1793,83 +1793,12 @@ MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
             const size_t nfargs = t.parameterList.length;
             size_t nfparams = tp.parameterList.length;
 
-            /* See if tuple match
-             */
-            if (nfparams > 0 && nfargs >= nfparams - 1)
-            {
-                /* See if 'A' of the template parameter matches 'A'
-                 * of the type of the last function parameter.
-                 */
-                Parameter fparam = tp.parameterList[nfparams - 1];
-                assert(fparam);
-                assert(fparam.type);
-                if (fparam.type.ty != Tident)
-                    goto L1;
-                TypeIdentifier tid = fparam.type.isTypeIdentifier();
-                if (tid.idents.length)
-                    goto L1;
-
-                /* Look through parameters to find tuple matching tid.ident
-                 */
-                size_t tupi = 0;
-                for (; 1; tupi++)
-                {
-                    if (tupi == parameters.length)
-                        goto L1;
-                    TemplateParameter tx = parameters[tupi];
-                    TemplateTupleParameter tup = tx.isTemplateTupleParameter();
-                    if (tup && tup.ident.equals(tid.ident))
-                        break;
-                }
-
-                /* The types of the function arguments [nfparams - 1 .. nfargs]
-                 * now form the tuple argument.
-                 */
-                size_t tuple_dim = nfargs - (nfparams - 1);
-
-                /* See if existing tuple, and whether it matches or not
-                 */
-                RootObject o = dedtypes[tupi];
-                if (o)
-                {
-                    // Existing deduced argument must be a tuple, and must match
-                    Tuple tup = isTuple(o);
-                    if (!tup || tup.objects.length != tuple_dim)
-                    {
-                        result = MATCH.nomatch;
-                        return;
-                    }
-                    for (size_t i = 0; i < tuple_dim; i++)
-                    {
-                        Parameter arg = t.parameterList[nfparams - 1 + i];
-                        if (!arg.type.equals(tup.objects[i]))
-                        {
-                            result = MATCH.nomatch;
-                            return;
-                        }
-                    }
-                }
-                else
-                {
-                    // Create new tuple
-                    auto tup = new Tuple(tuple_dim);
-                    for (size_t i = 0; i < tuple_dim; i++)
-                    {
-                        Parameter arg = t.parameterList[nfparams - 1 + i];
-                        tup.objects[i] = arg.type;
-                    }
-                    dedtypes[tupi] = tup;
-                }
-                nfparams--; // don't consider the last parameter for type deduction
-                goto L2;
-            }
-
-        L1:
-            if (nfargs != nfparams)
+            if (!deduceFunctionTuple(t, tp, parameters, dedtypes, nfargs, nfparams))
             {
                 result = MATCH.nomatch;
                 return;
             }
+
         L2:
             assert(nfparams <= tp.parameterList.length);
             foreach (i, ap; tp.parameterList)
@@ -2586,6 +2515,72 @@ private void deduceBaseClassParameters(ref BaseClass b, Scope* sc, Type tparam, 
     {
         deduceBaseClassParameters(bi, sc, tparam, parameters, dedtypes, best, numBaseClassMatches);
     }
+}
+
+/*
+ * Handle tuple matching for function parameters.
+ * If the last parameter of `tp` is a template tuple parameter,
+ * collect the corresponding argument types from `t`.
+ * Params:
+ *     t          = actual function type
+ *     tp         = template function type
+ *     parameters = template parameters
+ *     dedtypes   = deduced types array
+ *     nfargs     = number of arguments in `t`
+ *     nfparams   = number of parameters in `tp` (updated on success)
+ * Returns: `true` on success, `false` on mismatch.
+ */
+private bool deduceFunctionTuple(TypeFunction t, TypeFunction tp,
+    ref TemplateParameters parameters, ref Objects dedtypes,
+    size_t nfargs, ref size_t nfparams)
+{
+    if (nfparams > 0 && nfargs >= nfparams - 1)
+    {
+        Parameter fparam = tp.parameterList[nfparams - 1];
+        assert(fparam && fparam.type);
+        if (fparam.type.ty == Tident)
+        {
+            TypeIdentifier tid = fparam.type.isTypeIdentifier();
+            if (tid.idents.length == 0)
+            {
+                size_t tupi = 0;
+                for (; tupi < parameters.length; ++tupi)
+                {
+                    TemplateParameter tx = parameters[tupi];
+                    TemplateTupleParameter tup = tx.isTemplateTupleParameter();
+                    if (tup && tup.ident.equals(tid.ident))
+                        break;
+                }
+                if (tupi == parameters.length)
+                    return nfargs == nfparams;
+
+                size_t tuple_dim = nfargs - (nfparams - 1);
+
+                RootObject o = dedtypes[tupi];
+                if (o)
+                {
+                    Tuple tup = isTuple(o);
+                    if (!tup || tup.objects.length != tuple_dim)
+                        return false;
+                    for (size_t i = 0; i < tuple_dim; ++i)
+                    {
+                        if (!t.parameterList[nfparams - 1 + i].type.equals(tup.objects[i]))
+                            return false;
+                    }
+                }
+                else
+                {
+                    auto tup = new Tuple(tuple_dim);
+                    for (size_t i = 0; i < tuple_dim; ++i)
+                        tup.objects[i] = t.parameterList[nfparams - 1 + i].type;
+                    dedtypes[tupi] = tup;
+                }
+                --nfparams; // ignore tuple parameter for further deduction
+                return true;
+            }
+        }
+    }
+    return nfargs == nfparams;
 }
 
 /********************
