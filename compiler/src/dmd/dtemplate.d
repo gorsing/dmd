@@ -1302,6 +1302,19 @@ private bool isTopRef(Type t)
            tb.ty == Tstruct && tb.hasPointers();
 }
 
+/*
+ * Returns a valid `Loc` for semantic routines.
+ * Some paths require a location derived from the first
+ * template parameter when available.
+ */
+private Loc semanticLoc(scope ref TemplateParameters parameters)
+{
+    Loc loc;
+    if (parameters.length)
+        loc = parameters[0].loc;
+    return loc;
+}
+
 /* These form the heart of template argument deduction.
  * Given 'this' being the type argument to the template instance,
  * it is matched against the template declaration parameter specialization
@@ -1316,20 +1329,10 @@ private bool isTopRef(Type t)
  * Output:
  *      dedtypes = [ int ]      // Array of Expression/Type's
  */
-MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters parameters, ref Objects dedtypes, uint* wm = null, size_t inferStart = 0, bool ignoreAliasThis = false)
+MATCH deduceType(scope RootObject o, scope Scope* sc, scope Type tparam,
+    scope ref TemplateParameters parameters, scope ref Objects dedtypes,
+    scope uint* wm = null, size_t inferStart = 0, bool ignoreAliasThis = false)
 {
-    /**
-     * Returns a valid `Loc` for semantic routines.
-     * Some paths require a location derived from the first
-     * template parameter when available.
-     */
-    Loc semanticLoc()
-    {
-        Loc loc;
-        if (parameters.length)
-            loc = (parameters)[0].loc;
-        return loc;
-    }
     extern (C++) final class DeduceType : Visitor
     {
         alias visit = Visitor.visit;
@@ -1359,7 +1362,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
                         goto Lnomatch;
 
                     /* Need a loc to go with the semantic routine. */
-                    Loc loc = semanticLoc();
+                    Loc loc = semanticLoc(parameters);
 
                     /* BUG: what if tparam is a template instance, that
                      * has as an argument another Tident?
@@ -1545,7 +1548,7 @@ MATCH deduceType(RootObject o, Scope* sc, Type tparam, ref TemplateParameters pa
             if (tparam.ty == Ttypeof)
             {
                     /* Need a loc to go with the semantic routine. */
-                    Loc loc = semanticLoc();
+                    Loc loc = semanticLoc(parameters);
 
                 tparam = tparam.typeSemantic(loc, sc);
             }
