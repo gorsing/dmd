@@ -1839,16 +1839,10 @@ private void checkUnusedImports(Module mod)
         if (!imp.aliasdecls.length)
             return; // only check selective imports
 
-        bool used = false;
         foreach (ad; imp.aliasdecls)
         {
-            if (ad.wasRead)
-            {
-                used = true;
-                break;
-            }
+            if (!ad.wasRead)
+                global.errorSink.warning(ad.loc, "import `%s` is unused", ad.toChars());
         }
-        if (!used)
-            global.errorSink.warning(imp.loc, "import `%s` is unused", imp.toChars());
     });
 }
