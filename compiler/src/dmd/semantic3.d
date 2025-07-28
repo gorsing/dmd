@@ -1829,13 +1829,15 @@ extern (D) bool checkClosure(FuncDeclaration fd)
 
 private void checkUnusedImports(Module mod)
 {
-    foreach (m; mod.members)
+    if (!mod.members)
+        return;
+    mod.members.foreachDsymbol( (m)
     {
         auto imp = m.isImport();
         if (!imp)
-            continue;
+            return;
         if (!imp.aliasdecls.length)
-            continue; // only check selective imports
+            return; // only check selective imports
 
         bool used = false;
         foreach (ad; imp.aliasdecls)
@@ -1848,5 +1850,5 @@ private void checkUnusedImports(Module mod)
         }
         if (!used)
             global.errorSink.warning(imp.loc, "import `%s` is unused", imp.toChars());
-    }
+    });
 }
