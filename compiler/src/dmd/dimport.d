@@ -164,6 +164,23 @@ extern (C++) final class Import : Dsymbol
         return imp && !imp.aliasId;
     }
 
+    /++
+     * Returns the fully qualified name of this import.
+     */
+    const(char)* fullName() const
+    {
+        import dmd.common.outbuffer : OutBuffer;
+
+        auto buf = OutBuffer();
+        foreach (pid; packages)
+        {
+            buf.writestring(pid.toString());
+            buf.writeByte('.');
+        }
+        buf.writestring(id.toString());
+        return buf.extractSlice(true).ptr;
+    }
+
     override void accept(Visitor v)
     {
         v.visit(this);

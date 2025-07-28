@@ -62,3 +62,26 @@ unittest
     assert(imports.any!(a => a == tuple("std.file", Visibility.Kind.private_)));
     assert(!imports.any!`a[0] == "std.algorithm"`); // not imported
 }
+
+@("unused selective import warning shows full module path")
+unittest
+{
+    import dmd.globals : global, DiagnosticReporting;
+
+    global.params.useWarnings = DiagnosticReporting.inform;
+
+    enum filename = "test.d";
+    enum code = q{
+        module test;
+        import std.algorithm.searching : countUntil;
+    }.stripDelimited;
+
+    const diagnostics = compiles(code, filename);
+
+    enum message = "Warning: import std.algorithm.searching is unused";
+    const expected = Diagnostic(SourceLoc(filename, 2, 1), message);
+
+    assert(diagnostics == [expected], "\n" ~ diagnostics.toString);
+
+    global.params.useWarnings = DiagnosticReporting.off;
+}

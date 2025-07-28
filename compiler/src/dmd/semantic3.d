@@ -1849,6 +1849,6 @@ private void checkUnusedImports(Module mod)
             }
         }
         if (!used)
-            global.errorSink.warning(imp.loc, "import `%s` is unused", imp.toChars());
+            global.errorSink.warning(imp.loc, "import `%s` is unused", imp.fullName());
     });
 }
