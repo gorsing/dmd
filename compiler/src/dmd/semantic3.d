@@ -215,6 +215,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
         }
         sc = sc.pop();
         sc.pop();
+        checkUnusedImports(mod);
         mod.semanticRun = PASS.semantic3done;
     }
 
@@ -1824,4 +1825,30 @@ extern (D) bool checkClosure(FuncDeclaration fd)
     }
 
     return true;
+}
+
+private void checkUnusedImports(Module mod)
+{
+    if (!mod.members)
+        return;
+    mod.members.foreachDsymbol( (m)
+    {
+        auto imp = m.isImport();
+        if (!imp)
+            return;
+        if (!imp.aliasdecls.length)
+            return; // only check selective imports
+
+        bool used = false;
+        foreach (ad; imp.aliasdecls)
+        {
+            if (ad.wasRead)
+            {
+                used = true;
+                break;
+            }
+        }
+        if (!used)
+            global.errorSink.warning(imp.loc, "import `%s` is unused", imp.toChars());
+    });
 }

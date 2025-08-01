@@ -622,7 +622,14 @@ extern (C++) final class AliasDeclaration : Declaration
         }
         // Reading the AliasDeclaration
         if (!this.ignoreRead)
+        {
             this.wasRead = true;                 // can never assign to this AliasDeclaration again
+            if (this._import)
+            {
+                if (auto imp = this._import.isImport())
+                    imp.used = true;
+            }
+        }
 
         if (inuse == 1 && type && _scope)
         {

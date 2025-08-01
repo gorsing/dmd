@@ -38,6 +38,8 @@ public:
 
     AliasDeclarations aliasdecls; // corresponding AliasDeclarations for alias=name pairs
 
+    bool used = false;            // set when any symbol from this import is referenced
+
     const char *kind() const override;
     Visibility visible() override;
     Import *syntaxCopy(Dsymbol *s) override; // copy only syntax trees
