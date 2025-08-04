@@ -4453,3 +4453,42 @@ private bool resolveTemplateInstantiation(Scope* sc, TemplateParameters* paramet
     }
     return true;
 }
+
+private  Expression getValue(ref Dsymbol s)
+{
+    if (s)
+    {
+        if (VarDeclaration v = s.isVarDeclaration())
+        {
+            if (v.storage_class & STC.manifest)
+                return v.getConstInitializer();
+        }
+    }
+    return null;
+}
+
+/***********************
+ * Try to get value from manifest constant
+ */
+private Expression getValue(Expression e)
+{
+    if (!e)
+        return null;
+    if (auto ve = e.isVarExp())
+    {
+        if (auto v = ve.var.isVarDeclaration())
+        {
+            if (v.storage_class & STC.manifest)
+            {
+                e = v.getConstInitializer();
+            }
+        }
+    }
+    return e;
+}
+
+Expression getExpression(RootObject o)
+{
+    auto s = isDsymbol(o);
+    return s ? .getValue(s) : .getValue(isExpression(o));
+}

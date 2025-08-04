@@ -75,7 +75,7 @@ import dmd.root.array;
 import dmd.common.outbuffer;
 import dmd.rootobject;
 import dmd.templatesem : matchWithInstance, formatParamsWithTiargs, leastAsSpecialized,
-                         declareParameter, deduceType, deduceTypeHelper, emptyArrayElement;
+                         declareParameter, deduceType, deduceTypeHelper, emptyArrayElement, getExpression;
 import dmd.tokens;
 import dmd.typesem : hasPointers, typeSemantic, merge, merge2, resolve, toDsymbol,
                      addStorageClass, isBaseOf, equivalent, sarrayOf, constOf, mutableOf, unSharedOf,
@@ -230,46 +230,6 @@ Dsymbol getDsymbol(RootObject oarg)
     if (auto ta = isType(oarg))
         return ta.toDsymbol(null);
     return isDsymbol(oarg); // if already a symbol
-}
-
-
-Expression getValue(ref Dsymbol s)
-{
-    if (s)
-    {
-        if (VarDeclaration v = s.isVarDeclaration())
-        {
-            if (v.storage_class & STC.manifest)
-                return v.getConstInitializer();
-        }
-    }
-    return null;
-}
-
-/***********************
- * Try to get value from manifest constant
- */
-Expression getValue(Expression e)
-{
-    if (!e)
-        return null;
-    if (auto ve = e.isVarExp())
-    {
-        if (auto v = ve.var.isVarDeclaration())
-        {
-            if (v.storage_class & STC.manifest)
-            {
-                e = v.getConstInitializer();
-            }
-        }
-    }
-    return e;
-}
-
-private Expression getExpression(RootObject o)
-{
-    auto s = isDsymbol(o);
-    return s ? .getValue(s) : .getValue(isExpression(o));
 }
 
 /******************************
