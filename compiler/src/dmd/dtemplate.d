@@ -233,7 +233,7 @@ Dsymbol getDsymbol(RootObject oarg)
 }
 
 
-private Expression getValue(ref Dsymbol s)
+Expression getValue(ref Dsymbol s)
 {
     if (s)
     {
