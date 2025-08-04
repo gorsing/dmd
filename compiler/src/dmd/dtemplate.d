@@ -74,7 +74,8 @@ import dmd.optimize;
 import dmd.root.array;
 import dmd.common.outbuffer;
 import dmd.rootobject;
-import dmd.templatesem : matchWithInstance, formatParamsWithTiargs, leastAsSpecialized, declareParameter, deduceType, deduceTypeHelper;
+import dmd.templatesem : matchWithInstance, formatParamsWithTiargs, leastAsSpecialized,
+                         declareParameter, deduceType, deduceTypeHelper, emptyArrayElement;
 import dmd.tokens;
 import dmd.typesem : hasPointers, typeSemantic, merge, merge2, resolve, toDsymbol,
                      addStorageClass, isBaseOf, equivalent, sarrayOf, constOf, mutableOf, unSharedOf,
@@ -248,7 +249,7 @@ private Expression getValue(ref Dsymbol s)
 /***********************
  * Try to get value from manifest constant
  */
-private Expression getValue(Expression e)
+Expression getValue(Expression e)
 {
     if (!e)
         return null;
@@ -278,7 +279,7 @@ private Expression getExpression(RootObject o)
  *      o2 = second object
  * Returns: true if they match
  */
-private bool match(RootObject o1, RootObject o2)
+bool match(RootObject o1, RootObject o2)
 {
     enum log = false;
 
@@ -975,7 +976,7 @@ extern (C++) final class TypeDeduced : Type
  * Given an identifier, figure out which TemplateParameter it is.
  * Return IDX_NOTFOUND if not found.
  */
-private size_t templateIdentifierLookup(Identifier id, TemplateParameters* parameters)
+size_t templateIdentifierLookup(Identifier id, TemplateParameters* parameters)
 {
     for (size_t i = 0; i < parameters.length; i++)
     {
