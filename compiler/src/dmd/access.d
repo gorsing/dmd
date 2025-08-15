@@ -67,14 +67,13 @@ private bool hasPackageAccess(Scope* sc, Dsymbol s)
 
 private bool hasPackageAccess(Module mod, Dsymbol s)
 {
+    const vis = s.visible();
     static if (LOG)
     {
-        printf("hasPackageAccess(s = '%s', mod = '%s', s.visibility.pkg = '%s')\n", s.toChars(), mod.toChars(), s.visible().pkg ? s.visible().pkg.toChars() : "NULL");
+        printf("hasPackageAccess(s = '%s', mod = '%s', s.visibility.pkg = '%s')\n", s.toChars(), mod.toChars(), vis.pkg ? vis.pkg.toChars() : "NULL");
     }
-    Package pkg = null;
-    if (s.visible().pkg)
-        pkg = s.visible().pkg;
-    else
+    Package pkg = vis.pkg;
+    if (!pkg)
     {
         // no explicit package for visibility, inferring most qualified one
         for (; s; s = s.parent)
