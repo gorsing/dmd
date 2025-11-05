@@ -103,7 +103,7 @@ private extern(C++) final class Semantic2Visitor : Visitor
             deprecationSupplemental(e.loc, "If intentional, use `%s !is null` instead to preserve behaviour",
                 e.toChars());
         }
-        auto sds = new ScopeDsymbol();
+        scope auto sds = new ScopeDsymbol();
         sc = sc.push(sds);
         sc.tinst = null;
         sc.minst = null;
