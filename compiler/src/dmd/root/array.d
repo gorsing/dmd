@@ -440,7 +440,7 @@ bool all(alias predicate, Range)(Range range)
 pragma(inline, true)
 bool all(alias predicate, T)(const(Array!T)* array)
 {
-    // Если указателя нет, технически нет элементов, нарушающих условие
+    // Vacuum truth: if the array doesn't exist, no element violates the condition.
     return !array || (*array)[].all!predicate;
 }
 
