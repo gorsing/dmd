@@ -490,14 +490,14 @@ unittest
 unittest
 {
     static struct Item { string id; bool error; }
-    
+
     auto items = Array!Item();
     items.push(Item("valid", false));
     items.push(Item("invalid", true));
 
     // Chain: filter -> any
     assert(items[].filter!(i => i.error).any!(i => i.id == "invalid"));
-    
+
     // Chain: map -> all
     assert(items[].map!(i => i.id).all!(id => id.length > 0));
 }
