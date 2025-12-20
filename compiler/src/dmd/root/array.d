@@ -444,6 +444,64 @@ bool all(alias predicate, T)(const(Array!T)* array)
     return !array || (*array)[].all!predicate;
 }
 
+/// Unittests for any and all (base logic and ranges)
+pure nothrow @safe @nogc unittest
+{
+    // Testing with a static array (Range interface)
+    enum a = [1, 10, 20, 30].staticArray;
+
+    // any tests
+    static assert( a[].any!(e => e == 20));
+    static assert(!a[].any!(e => e == 5));
+    static assert(!((int[]).init).any!(e => e > 0)); // Empty range -> false
+
+    // all tests
+    static assert( a[].all!(e => e > 0));
+    static assert(!a[].all!(e => e > 15));
+    static assert(((int[]).init).all!(e => e > 0));  // Vacuum truth: empty range -> true
+}
+
+/// Unittests for pointer overloads (DMD-specific usage)
+pure nothrow @safe unittest
+{
+    import dmd.root.rmem;
+
+    auto arr = new Array!int();
+    arr.push(10);
+    arr.push(20);
+
+    // any on pointer
+    assert( arr.any!(e => e == 10));
+    assert(!arr.any!(e => e == 30));
+
+    // all on pointer
+    assert( arr.all!(e => e >= 10));
+    assert(!arr.all!(e => e == 10));
+
+    // null pointer checks
+    Array!int* emptyArr = null;
+    assert(!emptyArr.any!(e => true));  // null -> false
+    assert( emptyArr.all!(e => false)); // null -> true (vacuum truth)
+
+    mem.xfree(arr);
+}
+
+/// Testing with complex types and range chaining (map/filter)
+pure nothrow @safe unittest
+{
+    static struct Item { string id; bool error; }
+    
+    auto items = Array!Item();
+    items.push(Item("valid", false));
+    items.push(Item("invalid", true));
+
+    // Chain: filter -> any
+    assert(items[].filter!(i => i.error).any!(i => i.id == "invalid"));
+    
+    // Chain: map -> all
+    assert(items[].map!(i => i.id).all!(id => id.length > 0));
+}
+
 unittest
 {
     // Test for objects implementing toString()
