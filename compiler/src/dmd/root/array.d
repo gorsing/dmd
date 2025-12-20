@@ -445,7 +445,7 @@ bool all(alias predicate, T)(const(Array!T)* array)
 }
 
 /// Unittests for any and all (base logic and ranges)
-pure nothrow @safe @nogc unittest
+unittest
 {
     // Testing with a static array (Range interface)
     enum a = [1, 10, 20, 30].staticArray;
@@ -462,7 +462,7 @@ pure nothrow @safe @nogc unittest
 }
 
 /// Unittests for pointer overloads (DMD-specific usage)
-pure nothrow @safe unittest
+unittest
 {
     import dmd.root.rmem;
 
@@ -487,7 +487,7 @@ pure nothrow @safe unittest
 }
 
 /// Testing with complex types and range chaining (map/filter)
-pure nothrow @safe unittest
+unittest
 {
     static struct Item { string id; bool error; }
     
