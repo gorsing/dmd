@@ -392,6 +392,58 @@ public:
     extern(D) size_t dim() const @nogc nothrow pure @safe { return length; }
 }
 
+/**
+ * Returns true if at least one element satisfies the predicate.
+ */
+pragma(inline, true)
+bool any(alias predicate, Range)(Range range)
+    if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
+{
+    for (; !range.empty; range.popFront())
+    {
+        if (predicate(range.front))
+            return true;
+    }
+    return false;
+}
+
+/**
+ * Returns true if all elements of the range satisfy the predicate.
+ * Returns true for an empty range (vacuum truth).
+ */
+pragma(inline, true)
+bool any(alias predicate, T)(const(Array!T)* array)
+{
+    return array && (*array)[].any!predicate;
+}
+
+/**
+ * Returns true if all elements of the range satisfy the predicate.
+ * Returns true for an empty range (vacuum truth).
+ */
+pragma(inline, true)
+bool all(alias predicate, Range)(Range range)
+    if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
+{
+    for (; !range.empty; range.popFront())
+    {
+        if (!predicate(range.front))
+            return false;
+    }
+    return true;
+}
+
+/**
+* Helper overload for pointers to Array!T (often used in DMD).
+* Returns true if the array is empty or all elements satisfy the predicate.
+ */
+pragma(inline, true)
+bool all(alias predicate, T)(const(Array!T)* array)
+{
+    // Если указателя нет, технически нет элементов, нарушающих условие
+    return !array || (*array)[].all!predicate;
+}
+
 unittest
 {
     // Test for objects implementing toString()
