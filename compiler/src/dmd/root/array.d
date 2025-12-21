@@ -393,10 +393,10 @@ public:
 }
 
 /**
- * Returns true if at least one element satisfies the predicate.
+ * Returns true if at least one element of the range satisfies the predicate.
  */
 pragma(inline, true)
-bool any(alias predicate, Range)(Range range)
+bool any(alias predicate, Range)(scope Range range)
     if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
 {
     for (; !range.empty; range.popFront())
@@ -408,11 +408,11 @@ bool any(alias predicate, Range)(Range range)
 }
 
 /**
- * Returns true if all elements of the range satisfy the predicate.
- * Returns true for an empty range (vacuum truth).
+ * Returns true if at least one element satisfies the predicate.
+ * Returns false if the array pointer is null or the array is empty.
  */
 pragma(inline, true)
-bool any(alias predicate, T)(const(Array!T)* array)
+bool any(alias predicate, T)(scope const(Array!T)* array)
 {
     return array && (*array)[].any!predicate;
 }
@@ -422,7 +422,7 @@ bool any(alias predicate, T)(const(Array!T)* array)
  * Returns true for an empty range (vacuum truth).
  */
 pragma(inline, true)
-bool all(alias predicate, Range)(Range range)
+bool all(alias predicate, Range)( scope Range range)
     if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
 {
     for (; !range.empty; range.popFront())
@@ -435,10 +435,10 @@ bool all(alias predicate, Range)(Range range)
 
 /**
 * Helper overload for pointers to Array!T (often used in DMD).
-* Returns true if the array is empty or all elements satisfy the predicate.
+* Returns true if the array pointer is null, empty, or all elements satisfy the predicate.
  */
 pragma(inline, true)
-bool all(alias predicate, T)(const(Array!T)* array)
+bool all(alias predicate, T)(scope const(Array!T)* array)
 {
     // Vacuum truth: if the array doesn't exist, no element violates the condition.
     return !array || (*array)[].all!predicate;
@@ -459,6 +459,15 @@ unittest
     static assert( a[].all!(e => e > 0));
     static assert(!a[].all!(e => e > 15));
     static assert(((int[]).init).all!(e => e > 0));  // Vacuum truth: empty range -> true
+}
+
+// length = 0, pointer is not null
+unittest
+{
+    auto arr = new Array!int();
+    assert(!arr.any!(e => true)); 
+    assert( arr.all!(e => false));
+    mem.xfree(arr);
 }
 
 /// Unittests for pointer overloads (DMD-specific usage)
