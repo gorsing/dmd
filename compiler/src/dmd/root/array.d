@@ -397,7 +397,7 @@ public:
  */
 pragma(inline, true)
 bool any(alias predicate, Range)(scope Range range)
-    if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
+if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
 {
     for (; !range.empty; range.popFront())
     {
@@ -423,7 +423,7 @@ bool any(alias predicate, T)(scope const(Array!T)* array)
  */
 pragma(inline, true)
 bool all(alias predicate, Range)( scope Range range)
-    if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
+if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
 {
     for (; !range.empty; range.popFront())
     {
@@ -465,7 +465,7 @@ unittest
 unittest
 {
     auto arr = new Array!int();
-    assert(!arr.any!(e => true)); 
+    assert(!arr.any!(e => true));
     assert( arr.all!(e => false));
     mem.xfree(arr);
 }
