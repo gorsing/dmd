@@ -392,6 +392,125 @@ public:
     extern(D) size_t dim() const @nogc nothrow pure @safe { return length; }
 }
 
+/**
+ * Returns true if at least one element of the range satisfies the predicate.
+ */
+pragma(inline, true)
+bool any(alias predicate, Range)(scope Range range)
+    if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
+{
+    for (; !range.empty; range.popFront())
+    {
+        if (predicate(range.front))
+            return true;
+    }
+    return false;
+}
+
+/**
+ * Returns true if at least one element satisfies the predicate.
+ * Returns false if the array pointer is null or the array is empty.
+ */
+pragma(inline, true)
+bool any(alias predicate, T)(scope const(Array!T)* array)
+{
+    return array && (*array)[].any!predicate;
+}
+
+/**
+ * Returns true if all elements of the range satisfy the predicate.
+ * Returns true for an empty range (vacuum truth).
+ */
+pragma(inline, true)
+bool all(alias predicate, Range)( scope Range range)
+    if (isInputRange!Range && isPredicateOf!(predicate, ElementType!Range))
+{
+    for (; !range.empty; range.popFront())
+    {
+        if (!predicate(range.front))
+            return false;
+    }
+    return true;
+}
+
+/**
+* Helper overload for pointers to Array!T (often used in DMD).
+* Returns true if the array pointer is null, empty, or all elements satisfy the predicate.
+ */
+pragma(inline, true)
+bool all(alias predicate, T)(scope const(Array!T)* array)
+{
+    // Vacuum truth: if the array doesn't exist, no element violates the condition.
+    return !array || (*array)[].all!predicate;
+}
+
+/// Unittests for any and all (base logic and ranges)
+unittest
+{
+    // Testing with a static array (Range interface)
+    enum a = [1, 10, 20, 30].staticArray;
+
+    // any tests
+    static assert( a[].any!(e => e == 20));
+    static assert(!a[].any!(e => e == 5));
+    static assert(!((int[]).init).any!(e => e > 0)); // Empty range -> false
+
+    // all tests
+    static assert( a[].all!(e => e > 0));
+    static assert(!a[].all!(e => e > 15));
+    static assert(((int[]).init).all!(e => e > 0));  // Vacuum truth: empty range -> true
+}
+
+// length = 0, pointer is not null
+unittest
+{
+    auto arr = new Array!int();
+    assert(!arr.any!(e => true)); 
+    assert( arr.all!(e => false));
+    mem.xfree(arr);
+}
+
+/// Unittests for pointer overloads (DMD-specific usage)
+unittest
+{
+    import dmd.root.rmem;
+
+    auto arr = new Array!int();
+    arr.push(10);
+    arr.push(20);
+
+    // any on pointer
+    assert( arr.any!(e => e == 10));
+    assert(!arr.any!(e => e == 30));
+
+    // all on pointer
+    assert( arr.all!(e => e >= 10));
+    assert(!arr.all!(e => e == 10));
+
+    // null pointer checks
+    Array!int* emptyArr = null;
+    assert(!emptyArr.any!(e => true));  // null -> false
+    assert( emptyArr.all!(e => false)); // null -> true (vacuum truth)
+
+    mem.xfree(arr);
+}
+
+/// Testing with complex types and range chaining (map/filter)
+unittest
+{
+    static struct Item { string id; bool error; }
+
+    auto items = Array!Item();
+    items.push(Item("valid", false));
+    items.push(Item("invalid", true));
+
+    // Chain: filter -> any
+    assert(items[].filter!(i => i.error).any!(i => i.id == "invalid"));
+
+    // Chain: map -> all
+    assert(items[].map!(i => i.id).all!(id => id.length > 0));
+}
+
 unittest
 {
     // Test for objects implementing toString()
