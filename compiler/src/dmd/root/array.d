@@ -224,12 +224,18 @@ public:
             enlarge(nentries);
     }
 
-    void remove(size_t i) pure nothrow @nogc
+    void remove(size_t i, size_t n = 1) pure nothrow @nogc
     {
-        if (length - i - 1)
-            memmove(data.ptr + i, data.ptr + i + 1, (length - i - 1) * T.sizeof);
-        length--;
-        debug (stomp) memset(data.ptr + length, 0xFF, T.sizeof);
+        if (n == 0) return;
+        assert(i + n <= length);
+
+        size_t m = length - (i + n);
+        if (m > 0)
+        {
+            memmove(data.ptr + i, data.ptr + i + n, m * T.sizeof);
+        }
+        length -= n;
+        debug (stomp) memset(data.ptr + length, 0xFF, n * T.sizeof);
     }
 
     void insert(size_t index, typeof(this)* a) pure nothrow
