@@ -60,7 +60,6 @@ import dmd.opover;
 import dmd.optimize;
 import dmd.parse;
 import dmd.root.filename;
-import dmd.root.array;
 import dmd.common.outbuffer;
 import dmd.root.rmem;
 import dmd.rootobject;
@@ -969,11 +968,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
                         if (funcdecl.vresult)
                         {
                             // Create: return vresult = exp;
-                            if (canElideCopy(exp, funcdecl.vresult.type, false))
-                                exp = new ConstructExp(rs.loc, funcdecl.vresult, exp);
-                            else
-                                exp = new BlitExp(rs.loc, funcdecl.vresult, exp);
-
+                            exp = new BlitExp(rs.loc, funcdecl.vresult, exp);
                             exp.type = funcdecl.vresult.type;
 
                             if (rs.caseDim)
@@ -1880,6 +1875,9 @@ extern (D) bool checkClosure(FuncDeclaration fd)
     }
 
     FuncDeclarations a;
+
+    a.reserve(fd.closureVars.length);
+
     foreach (v; fd.closureVars)
     {
         foreach (f; v.nestedrefs)
@@ -1907,6 +1905,6 @@ extern (D) bool checkClosure(FuncDeclaration fd)
             }
         }
     }
-
+    a.shrinkToFit();
     return true;
 }
