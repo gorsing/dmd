@@ -35,22 +35,22 @@ struct Callable
         () @trusted { m_dg = dg; }();
         m_type = Call.DG;
     }
-    void opCall()
+    void opCall() scope
     {
-        switch (m_type)
+        final switch (m_type)
         {
+            case Call.NO:
+                break;
             case Call.FN:
                 m_fn();
                 break;
             case Call.DG:
                 m_dg();
                 break;
-            default:
-                break;
         }
     }
 private:
-    enum Call
+    enum Call : ubyte
     {
         NO,
         FN,
