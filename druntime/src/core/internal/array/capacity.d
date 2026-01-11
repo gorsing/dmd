@@ -141,6 +141,11 @@ do
     // least the requested allocated size.
     auto attrs = __typeAttrs!T((*p).ptr) | BlkAttr.APPENDABLE;
 
+    static if (!hasIndirections!T)
+    {
+        attrs |= BlkAttr.NO_SCAN;
+    }
+
     // use this static enum to avoid recomputing TypeInfo for every call.
     static enum ti = typeid(T);
     auto ptr = GC.malloc(reqsize, attrs, ti);
@@ -271,6 +276,11 @@ private size_t _d_arraysetlengthT_(Tarr : T[], T)(return ref scope Tarr arr, siz
     static if (is(T == struct) && __traits(hasMember, T, "xdtor"))
     {
         gcAttrs |= BlkAttr.FINALIZE;
+    }
+
+    static if (!hasIndirections!T)
+    {
+        gcAttrs |= BlkAttr.NO_SCAN;
     }
 
     if (!arr.ptr)
