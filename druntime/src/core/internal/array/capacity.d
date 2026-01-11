@@ -111,6 +111,7 @@ do
     import core.exception : onOutOfMemoryError;
     import core.stdc.string : memcpy, memset;
     import core.internal.array.utils: __typeAttrs;
+    import core.internal.traits : hasIndirections;
     import core.internal.lifetime : __doPostblit;
 
     import core.memory : GC;
@@ -237,7 +238,7 @@ private size_t _d_arraysetlengthT_(Tarr : T[], T)(return ref scope Tarr arr, siz
     import core.checkedint : mulu;
     import core.exception : onFinalizeError, onOutOfMemoryError;
     import core.stdc.string : memcpy, memset;
-    import core.internal.traits : hasElaborateCopyConstructor, Unqual;
+    import core.internal.traits : hasElaborateCopyConstructor, Unqual, hasIndirections;
     import core.lifetime : emplace;
     import core.memory;
     import core.internal.lifetime : __doPostblit;
