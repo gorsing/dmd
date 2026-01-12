@@ -64,17 +64,21 @@ public:
     extern(D) this()(T[] elems ...) pure nothrow if (is(T == struct) || is(T == class))
     {
         this.reserve(elems.length);
+        this.length = elems.length
 
         static if (__traits(isPOD, T))
         {
-            memcpy(data.ptr, elems.ptr, elems.length * T.sizeof);
-            this.length = elems.length;
+            if (elems.length)
+                memcpy(data.ptr, elems.ptr, elems.length * T.sizeof);
         }
         else
         {
-            foreach (e; elems)
+            auto p = data.ptr;
+            auto q = elems.ptr;
+            const n = elems.length;
+            for (size_t i = 0; i < n; ++i)
             {
-                this.push(e);
+                p[i] = q[i];
             }
         }
     }
