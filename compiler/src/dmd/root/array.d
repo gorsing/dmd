@@ -64,7 +64,7 @@ public:
     extern(D) this()(T[] elems ...) pure nothrow if (is(T == struct) || is(T == class))
     {
         this.reserve(elems.length);
-        this.length = elems.length
+        this.length = elems.length;
 
         static if (__traits(isPOD, T))
         {
