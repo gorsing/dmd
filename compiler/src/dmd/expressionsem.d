@@ -8252,7 +8252,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 return setError();
             }
 
-            void errorHelper(const(char)* failMessage) scope
+            void errorHelper(const(char)* failMessage, Loc loc) scope
             {
                 OutBuffer buf;
                 buf.writeByte('(');
@@ -8328,7 +8328,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 exp.f = exp.f.toAliasFunc();
                 TypeFunction tf = cast(TypeFunction)exp.f.type;
 
-                void errorHelper2(const(char)* failMessage) scope
+                void errorHelper2(const(char)* failMessage, Loc loc) scope
                 {
                     OutBuffer buf;
                     buf.writeByte('(');
