@@ -704,7 +704,8 @@ bool isLvalue(Expression _this)
             return false;
         auto t1b = _this.e1.type.toBasetype();
         if (t1b.isTypeAArray() || t1b.isTypeSArray() ||
-            (_this.e1.isIndexExp() && t1b != t1b.isTypeDArray()))
+            (_this.e1.isIndexExp() && t1b != t1b.isTypeDArray()) ||
+            _this.e1.op == EXP.arrayLiteral)
         {
             return _this.e1.isLvalue();
         }
@@ -2072,9 +2073,7 @@ Expression checkNoreturnVarAccess(Expression exp)
     {
         auto msg = new StringExp(exp.loc, "Accessed expression of type `noreturn`");
         msg.type = Type.tstring;
-        auto ae = new AssertExp(exp.loc, IntegerExp.literal!0, msg);
-        ae.loweredFrom = exp;
-        result = ae;
+        result = new AssertExp(exp.loc, IntegerExp.literal!0, msg);
         result.type = exp.type;
     }
 
@@ -4188,10 +4187,6 @@ private bool functionParameters(Loc loc, Scope* sc,
         {
             arg = arg.resolveLoc(loc, sc);
             (*arguments)[i] = arg;
-        }
-        else if (!(p.storageClass & (STC.ref_ | STC.out_)))
-        {
-            (*arguments)[i] = checkNoreturnVarAccess(arg);
         }
 
         if (tf.parameterList.varargs == VarArg.typesafe && i + 1 == nparams) // https://dlang.org/spec/function.html#variadic
@@ -8257,7 +8252,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 return setError();
             }
 
-            void errorHelper(const(char)* failMessage, Loc argloc) scope
+            void errorHelper(const(char)* failMessage) scope
             {
                 OutBuffer buf;
                 buf.writeByte('(');
@@ -8270,7 +8265,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 .error(exp.loc, "%s `%s` is not callable using argument types `%s`",
                     p, exp.e1.toErrMsg(), buf.peekChars());
                 if (failMessage)
-                    errorSupplemental((argloc !is Loc.initial) ? argloc : exp.loc, "%s", failMessage);
+                    errorSupplemental(exp.loc, "%s", failMessage);
             }
 
             if (callMatch(exp.f, tf, null, exp.argumentList, 0, &errorHelper, sc) == MATCH.nomatch)
@@ -8333,7 +8328,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 exp.f = exp.f.toAliasFunc();
                 TypeFunction tf = cast(TypeFunction)exp.f.type;
 
-                void errorHelper2(const(char)* failMessage, Loc argloc) scope
+                void errorHelper2(const(char)* failMessage) scope
                 {
                     OutBuffer buf;
                     buf.writeByte('(');
@@ -8351,7 +8346,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                     .error(exp.loc, "%s `%s` is not callable using argument types `%s`",
                         exp.f.kind(), exp.f.toErrMsg(), buf.peekChars());
                     if (failMessage)
-                        errorSupplemental((argloc !is Loc.initial) ? argloc : exp.loc, "%s", failMessage);
+                        errorSupplemental(exp.loc, "%s", failMessage);
                     .errorSupplemental(exp.f.loc, "`%s%s` declared here", exp.f.toPrettyChars(), parametersTypeToChars(tf.parameterList));
                     exp.f = null;
                 }
@@ -17558,7 +17553,24 @@ Modifiable checkModifiable(Expression exp, Scope* sc, ModifyFlags flag = ModifyF
 
             //printf("SliceExp::checkModifiable %s\n", sliceExp.toChars());
             auto e1 = sliceExp.e1;
-            if (e1.type.ty == Tsarray || (e1.op == EXP.index && e1.type.ty != Tarray) || e1.op == EXP.slice)
+
+            if (e1.op == EXP.arrayLiteral || e1.op == EXP.structLiteral)
+            {
+                if (!(flag & ModifyFlags.noError))
+                {
+                    if (e1.type.ty != Terror)
+                    {
+                        error(exp.loc, "cannot modify the content of %s literal `%s`",
+                            e1.op == EXP.arrayLiteral ? "array".ptr : "struct".ptr,
+                            e1.toChars());
+                    }
+                }
+                return Modifiable.no;
+            }
+
+            if (e1.type.ty == Tsarray ||
+                (e1.op == EXP.index && e1.type.ty != Tarray) ||
+                e1.op == EXP.slice)
             {
                 return e1.checkModifiable(sc, flag);
             }
@@ -17570,6 +17582,15 @@ Modifiable checkModifiable(Expression exp, Scope* sc, ModifyFlags flag = ModifyF
         case EXP.index:
             auto indexExp = cast(IndexExp)exp;
             auto e1 = indexExp.e1;
+
+            if (e1.op == EXP.arrayLiteral || e1.op == EXP.structLiteral)
+            {
+                 if (!(flag & ModifyFlags.noError))
+                            error(exp.loc, "cannot modify the content of %s literal `%s`",
+                            e1.op == EXP.arrayLiteral ? "array".ptr : "struct".ptr,
+                            e1.toChars());
+                 return Modifiable.no;
+            }
             if (e1.type.ty == Tsarray ||
                 e1.type.ty == Taarray ||
                 (e1.op == EXP.index && e1.type.ty != Tarray) ||
