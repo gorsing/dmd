@@ -17588,7 +17588,24 @@ Modifiable checkModifiable(Expression exp, Scope* sc, ModifyFlags flag = ModifyF
 
             //printf("SliceExp::checkModifiable %s\n", sliceExp.toChars());
             auto e1 = sliceExp.e1;
-            if (e1.type.ty == Tsarray || (e1.op == EXP.index && e1.type.ty != Tarray) || e1.op == EXP.slice)
+
+            if (e1.op == EXP.arrayLiteral || e1.op == EXP.structLiteral)
+            {
+                if (!(flag & ModifyFlags.noError))
+                {
+                    if (e1.type.ty != Terror)
+                    {
+                        error(exp.loc, "cannot modify the content of %s literal `%s`",
+                            e1.op == EXP.arrayLiteral ? "array".ptr : "struct".ptr,
+                            e1.toChars());
+                    }
+                }
+                return Modifiable.no;
+            }
+
+            if (e1.type.ty == Tsarray ||
+                (e1.op == EXP.index && e1.type.ty != Tarray) ||
+                e1.op == EXP.slice)
             {
                 return e1.checkModifiable(sc, flag);
             }
@@ -17599,13 +17616,28 @@ Modifiable checkModifiable(Expression exp, Scope* sc, ModifyFlags flag = ModifyF
 
         case EXP.index:
             auto indexExp = cast(IndexExp)exp;
-            auto e1 = indexExp.e1;
-            if (e1.type.ty == Tsarray ||
-                e1.type.ty == Taarray ||
-                (e1.op == EXP.index && e1.type.ty != Tarray) ||
-                e1.op == EXP.slice)
+            auto e1_idx = indexExp.e1;
+
+            if (e1_idx.op == EXP.arrayLiteral || e1_idx.op == EXP.structLiteral)
             {
-                return e1.checkModifiable(sc, flag);
+                 if (!(flag & ModifyFlags.noError))
+                 {
+                    if (e1_idx.type.ty != Terror)
+                    {
+                        error(exp.loc, "cannot modify the content of %s literal `%s`",
+                            e1_idx.op == EXP.arrayLiteral ? "array".ptr : "struct".ptr,
+                            e1_idx.toChars());
+                    }
+                 }
+                 return Modifiable.no;
+            }
+
+            if (e1_idx.type.ty == Tsarray ||
+                e1_idx.type.ty == Taarray ||
+                (e1_idx.op == EXP.index && e1_idx.type.ty != Tarray) ||
+                e1_idx.op == EXP.slice)
+            {
+                return e1_idx.checkModifiable(sc, flag);
             }
             return Modifiable.yes;
 
@@ -17640,6 +17672,16 @@ Expression modifiableLvalue(Expression _this, Scope* sc, Expression eorig = null
         // See if this expression is a modifiable lvalue (i.e. not const)
         if (exp.isBinAssignExp())
             return exp.toLvalue(sc, "modify");
+
+        if (checkModifiable(exp, sc) == Modifiable.no)
+        {
+            Expression e = exp;
+            while (e.op == EXP.slice || e.op == EXP.index)
+                e = (cast(UnaExp)e).e1;
+
+            if (e.op == EXP.arrayLiteral || e.op == EXP.structLiteral)
+                return ErrorExp.get();
+        }
 
         auto type = exp.type;
         if (checkModifiable(exp, sc) == Modifiable.yes)

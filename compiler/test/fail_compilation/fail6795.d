@@ -2,9 +2,9 @@
 /*
 TEST_OUTPUT:
 ---
-fail_compilation/fail6795.d(19): Error: cannot modify expression `[0][0]` because it is not an lvalue
+fail_compilation/fail6795.d(19): Error: cannot modify the content of array literal `[0]`
 fail_compilation/fail6795.d(20): Error: cannot modify expression `[0:0][0]` because it is not an lvalue
-fail_compilation/fail6795.d(22): Error: cannot modify expression `[0][0]` because it is not an lvalue
+fail_compilation/fail6795.d(22): Error: cannot modify the content of array literal `[0]`
 fail_compilation/fail6795.d(23): Error: cannot modify expression `[0:0][0]` because it is not an lvalue
 fail_compilation/fail6795.d(25): Error: cannot take address of expression `[0][0]` because it is not an lvalue
 fail_compilation/fail6795.d(30): Error: cannot modify expression `Some["zz"]` because it is not an lvalue
