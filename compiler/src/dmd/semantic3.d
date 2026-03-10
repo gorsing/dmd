@@ -292,9 +292,17 @@ private extern(C++) final class Semantic3Visitor : Visitor
         //printf(" sc.incontract = %d\n", sc.contract);
         if (funcdecl.semanticRun >= PASS.semantic3)
             return;
+
         funcdecl.semanticRun = PASS.semantic3;
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
+
+        if (!funcdecl.type || funcdecl.type.ty != Tfunction)
+            return;
+
+        TypeFunction f = cast(TypeFunction)funcdecl.type;
+        if (!funcdecl.inferRetType && f.next.ty == Terror)
+            return;
 
         if (sc.lintFlags & LintFlags.constSpecial)
         {
@@ -1805,6 +1813,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
 
     runSemantic(sd.xeq, sd.xerreq);
     runSemantic(sd.xcmp, sd.xerrcmp);
+
 
     FuncDeclaration ftostr = search_toString(sd);
     if (ftostr &&
