@@ -292,7 +292,6 @@ private extern(C++) final class Semantic3Visitor : Visitor
         //printf(" sc.incontract = %d\n", sc.contract);
         if (funcdecl.semanticRun >= PASS.semantic3)
             return;
-
         funcdecl.semanticRun = PASS.semantic3;
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
@@ -317,7 +316,6 @@ private extern(C++) final class Semantic3Visitor : Visitor
 
         if (!funcdecl.type || funcdecl.type.ty != Tfunction)
             return;
-
         TypeFunction f = cast(TypeFunction)funcdecl.type;
         if (!funcdecl.inferRetType && f.next.ty == Terror)
             return;
@@ -1798,6 +1796,14 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     {
         if (fd && fd._scope && fd.semanticRun < PASS.semantic3done)
         {
+            if ((fd._scope.lintFlags & LintFlags.constSpecial) &&
+                !(fd.storage_class & STC.const_) &&
+                !fd.isGenerated())
+            {
+                import dmd.errors : lint;
+                lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
+            }
+
             const errors = global.startGagging();
             fd.semantic3(fd._scope);
             if (global.endGagging(errors))
@@ -1807,7 +1813,6 @@ void semanticTypeInfoMembers(StructDeclaration sd)
 
     runSemantic(sd.xeq, sd.xerreq);
     runSemantic(sd.xcmp, sd.xerrcmp);
-
 
     FuncDeclaration ftostr = search_toString(sd);
     if (ftostr &&
