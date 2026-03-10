@@ -1,7 +1,7 @@
 // Enable our new lint rule for the file
 pragma(lint, constSpecial):
 
-struct BadStruct 
+struct BadStruct
 {
     // LINT: special method `opEquals` should be marked as `const`
     bool opEquals(ref const BadStruct rhs) {
@@ -12,7 +12,7 @@ struct BadStruct
     hash_t toHash() {
         return 0;
     }
-    
+
     // LINT: special method `opCmp` should be marked as `const`
     int opCmp(ref const BadStruct rhs) {
         return 0;
@@ -24,7 +24,7 @@ struct BadStruct
     }
 }
 
-struct GoodStruct 
+struct GoodStruct
 {
     // OK: method is marked as const
     bool opEquals(ref const GoodStruct rhs) const {
@@ -35,7 +35,7 @@ struct GoodStruct
     hash_t toHash() const {
         return 1;
     }
-    
+
     // OK: method is marked as const
     int opCmp(ref const GoodStruct rhs) const {
         return 0;
@@ -50,7 +50,7 @@ struct GoodStruct
 // Disable the linter for the following code
 pragma(lint, none):
 
-struct IgnoredStruct 
+struct IgnoredStruct
 {
     // No lint messages here, as the linter is disabled!
     bool opEquals(ref const IgnoredStruct rhs) {
@@ -58,7 +58,7 @@ struct IgnoredStruct
     }
 }
 
-void main() 
+void main()
 {
     import core.stdc.stdio;
     printf("Compilation succeeded despite lint messages!\n");
