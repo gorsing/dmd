@@ -1,3 +1,22 @@
+/*
+REQUIRED_ARGS: -w
+TEST_OUTPUT:
+---
+compilable/lint_const_special.d(26): Lint: special method `opEquals` should be marked as `const`
+    bool opEquals(ref const BadStruct rhs) {
+         ^
+compilable/lint_const_special.d(31): Lint: special method `toHash` should be marked as `const`
+    hash_t toHash() {
+           ^
+compilable/lint_const_special.d(36): Lint: special method `opCmp` should be marked as `const`
+    int opCmp(ref const BadStruct rhs) {
+        ^
+compilable/lint_const_special.d(41): Lint: special method `toString` should be marked as `const`
+    string toString() {
+           ^
+---
+*/
+
 // Enable our new lint rule for the file
 pragma(lint, constSpecial):
 
@@ -60,6 +79,4 @@ struct IgnoredStruct
 
 void main()
 {
-    import core.stdc.stdio;
-    printf("Compilation succeeded despite lint messages!\n");
 }
