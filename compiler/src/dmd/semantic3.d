@@ -1796,14 +1796,6 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     {
         if (fd && fd._scope && fd.semanticRun < PASS.semantic3done)
         {
-            if ((fd._scope.lintFlags & LintFlags.constSpecial) &&
-                !(fd.storage_class & STC.const_) &&
-                !fd.isGenerated())
-            {
-                import dmd.errors : lint;
-                lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
-            }
-
             const errors = global.startGagging();
             fd.semantic3(fd._scope);
             if (global.endGagging(errors))

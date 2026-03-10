@@ -309,6 +309,8 @@ immutable Msgtable[] msgtable =
     { "linkerDirective" },
     { "lint" },
     { "constSpecial" },
+    { "none" },
+    { "all" },
     { "mangle" },
     { "msg" },
     { "startaddress" },
