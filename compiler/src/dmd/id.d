@@ -307,6 +307,8 @@ immutable Msgtable[] msgtable =
     { "Pinline", "inline" },
     { "lib" },
     { "linkerDirective" },
+    { "lint" },
+    { "constSpecial" },
     { "mangle" },
     { "msg" },
     { "startaddress" },
