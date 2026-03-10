@@ -206,12 +206,10 @@ void pragmaDeclSemantic(PragmaDeclaration pd, Scope* sc)
             .error(pd.loc, "%s `%s` takes no argument", pd.kind, pd.toPrettyChars);
         return declarations();
     }
-    // --- ДОБАВЛЯЕМ СЮДА ---
     else if (pd.ident == Id.lint)
     {
         return declarations();
     }
-    // ----------------------
     else if (!global.params.ignoreUnsupportedPragmas)
     {
         error(pd.loc, "unrecognized `pragma(%s)`", pd.ident.toChars());
