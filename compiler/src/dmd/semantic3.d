@@ -297,13 +297,6 @@ private extern(C++) final class Semantic3Visitor : Visitor
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
 
-        if (!funcdecl.type || funcdecl.type.ty != Tfunction)
-            return;
-
-        TypeFunction f = cast(TypeFunction)funcdecl.type;
-        if (!funcdecl.inferRetType && f.next.ty == Terror)
-            return;
-
         if (sc.lintFlags & LintFlags.constSpecial)
         {
             if (funcdecl.ident == Id.opEquals || funcdecl.ident == Id.opCmp ||
@@ -324,6 +317,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
 
         if (!funcdecl.type || funcdecl.type.ty != Tfunction)
             return;
+
         TypeFunction f = cast(TypeFunction)funcdecl.type;
         if (!funcdecl.inferRetType && f.next.ty == Terror)
             return;
