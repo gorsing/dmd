@@ -10,6 +10,7 @@
  */
 
 module dmd.lib.scanelf;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import core.stdc.stdint;

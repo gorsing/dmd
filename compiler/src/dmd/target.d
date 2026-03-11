@@ -24,6 +24,7 @@
  */
 
 module dmd.target;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

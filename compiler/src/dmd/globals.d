@@ -10,6 +10,7 @@
  */
 
 module dmd.globals;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdint;

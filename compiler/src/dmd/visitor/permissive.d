@@ -6,6 +6,7 @@
  */
 
 module dmd.visitor.permissive;
+pragma(lint, constSpecial):
 
 import dmd.visitor.parsetime;
 

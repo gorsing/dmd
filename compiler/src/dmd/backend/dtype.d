@@ -10,6 +10,7 @@
  */
 
 module dmd.backend.dtype;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

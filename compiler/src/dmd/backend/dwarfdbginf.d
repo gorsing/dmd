@@ -32,6 +32,7 @@ See: https://issues.dlang.org/show_bug.cgi?id=20510
 */
 
 module dmd.backend.dwarfdbginf;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

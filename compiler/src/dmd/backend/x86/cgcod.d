@@ -11,6 +11,7 @@
  */
 
 module dmd.backend.x86.cgcod;
+pragma(lint, constSpecial):
 
 version = FRAMEPTR;
 

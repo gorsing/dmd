@@ -11,6 +11,7 @@
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/compiler/src/dmd/backend/global.d, backend/global.d)
  */
 module dmd.backend.global;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_global.html
 

@@ -23,6 +23,7 @@
  */
 
 module dmd.attribsem;
+pragma(lint, constSpecial):
 
 import dmd.arraytypes;
 import dmd.attrib;

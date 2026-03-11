@@ -12,6 +12,7 @@
  */
 
 module dmd.access;
+pragma(lint, constSpecial):
 
 import dmd.aggregate;
 import dmd.astenums;

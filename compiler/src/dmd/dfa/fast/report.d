@@ -15,6 +15,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dfa/fast/report.d
  */
 module dmd.dfa.fast.report;
+pragma(lint, constSpecial):
 import dmd.dfa.fast.structure;
 import dmd.location;
 import dmd.func;

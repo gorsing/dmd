@@ -14,6 +14,7 @@ Documentation: https://dlang.org/phobos/dmd_common_timetrace.html
 Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/timetrace.d
 */
 module dmd.timetrace;
+pragma(lint, constSpecial):
 
 import dmd.location;
 import dmd.dsymbol;

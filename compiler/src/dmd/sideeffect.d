@@ -10,6 +10,7 @@
  */
 
 module dmd.sideeffect;
+pragma(lint, constSpecial):
 
 import dmd.astenums;
 import dmd.declaration;

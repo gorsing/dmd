@@ -10,6 +10,7 @@
  */
 
 module dmd.typesem;
+pragma(lint, constSpecial):
 
 import core.checkedint;
 import core.stdc.string;

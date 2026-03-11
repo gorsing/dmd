@@ -16,6 +16,7 @@
  */
 
 module dmd.backend.cv8;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

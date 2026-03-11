@@ -12,6 +12,7 @@
  */
 
 module dmd.cond;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import dmd.arraytypes;

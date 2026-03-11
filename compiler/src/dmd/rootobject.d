@@ -10,6 +10,7 @@
  */
 
 module dmd.rootobject;
+pragma(lint, constSpecial):
 
 /***********************************************************
  */

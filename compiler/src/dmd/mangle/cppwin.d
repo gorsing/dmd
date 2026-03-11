@@ -10,6 +10,7 @@
  */
 
 module dmd.mangle.cppwin;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

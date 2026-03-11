@@ -16,6 +16,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dfa/fast/expression.d
  */
 module dmd.dfa.fast.expression;
+pragma(lint, constSpecial):
 import dmd.dfa.fast.analysis;
 import dmd.dfa.fast.report;
 import dmd.dfa.fast.statement;

@@ -10,6 +10,7 @@
  */
 
 module dmd.asttypename;
+pragma(lint, constSpecial):
 
 import dmd.ast_node;
 import dmd.attrib;

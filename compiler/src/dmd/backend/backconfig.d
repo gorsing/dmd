@@ -11,6 +11,7 @@
  */
 
 module dmd.backend.backconfig;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

@@ -4,6 +4,7 @@
  */
 
 module dmd.visitor.strict;
+pragma(lint, constSpecial):
 
 import dmd.visitor.parsetime;
 

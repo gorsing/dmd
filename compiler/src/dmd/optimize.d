@@ -10,6 +10,7 @@
  */
 
 module dmd.optimize;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

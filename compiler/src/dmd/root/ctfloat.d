@@ -10,6 +10,7 @@
  */
 
 module dmd.root.ctfloat;
+pragma(lint, constSpecial):
 
 static import core.math, core.stdc.math;
 import core.stdc.errno;

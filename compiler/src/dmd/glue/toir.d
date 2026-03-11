@@ -10,6 +10,7 @@
  */
 
 module dmd.glue.toir;
+pragma(lint, constSpecial):
 
 import core.checkedint;
 import core.stdc.stdio;

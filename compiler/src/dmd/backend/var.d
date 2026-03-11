@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.var;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

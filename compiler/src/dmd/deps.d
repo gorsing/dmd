@@ -29,6 +29,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/deps.d
  */
 module dmd.deps;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio : printf;
 import core.stdc.string : strcmp;

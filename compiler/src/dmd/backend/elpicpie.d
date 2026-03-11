@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.elpicpie;
+pragma(lint, constSpecial):
 
 import core.stdc.stdarg;
 import core.stdc.stdio;

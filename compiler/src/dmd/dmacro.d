@@ -10,6 +10,7 @@
  */
 
 module dmd.dmacro;
+pragma(lint, constSpecial):
 
 import core.stdc.ctype;
 import core.stdc.string;

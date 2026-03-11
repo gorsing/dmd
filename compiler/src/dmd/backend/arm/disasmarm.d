@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.arm.disasmarm;
+pragma(lint, constSpecial):
 
 nothrow @nogc:
 

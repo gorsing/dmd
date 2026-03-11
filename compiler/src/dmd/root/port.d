@@ -10,6 +10,7 @@
  */
 
 module dmd.root.port;
+pragma(lint, constSpecial):
 
 import core.stdc.ctype;
 import core.stdc.errno;

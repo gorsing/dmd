@@ -10,6 +10,7 @@
  */
 
 module dmd.arraytypes;
+pragma(lint, constSpecial):
 
 import dmd.dclass;
 import dmd.declaration;

@@ -14,6 +14,7 @@
  */
 
 module dmd.backend.dout;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

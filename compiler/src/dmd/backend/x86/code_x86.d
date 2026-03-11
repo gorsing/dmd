@@ -11,6 +11,7 @@
  */
 
 module dmd.backend.x86.code_x86;
+pragma(lint, constSpecial):
 
 import dmd.backend.cdef;
 import dmd.backend.cc : config, FL;

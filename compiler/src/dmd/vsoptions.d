@@ -10,6 +10,7 @@
  */
 
 module dmd.vsoptions;
+pragma(lint, constSpecial):
 
 version (Windows):
 import core.stdc.ctype;

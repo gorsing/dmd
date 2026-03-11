@@ -12,6 +12,7 @@
  */
 
 module dmd.semantic3;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;
@@ -296,23 +297,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
 
-        if (sc.lintFlags & LintFlags.constSpecial)
-        {
-            if (funcdecl.ident == Id.opEquals || funcdecl.ident == Id.opCmp ||
-                funcdecl.ident == Id.tohash || funcdecl.ident == Id.tostring)
-            {
-                if (!funcdecl.isGenerated() &&
-                    funcdecl.toParent2() &&
-                    funcdecl.toParent2().isStructDeclaration())
-                {
-                    if (!(funcdecl.storage_class & STC.const_) && !funcdecl.type.isConst())
-                    {
-                        import dmd.errors : lint;
-                        lint(funcdecl.loc, "special method `%s` should be marked as `const`", funcdecl.ident.toChars());
-                    }
-                }
-            }
-        }
+                checkConstSpecial(funcdecl);
 
         if (!funcdecl.type || funcdecl.type.ty != Tfunction)
             return;
@@ -1796,17 +1781,13 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     {
         if (fd && fd._scope && fd.semanticRun < PASS.semantic3done)
         {
-            if ((fd._scope.lintFlags & LintFlags.constSpecial) &&
-                !(fd.storage_class & STC.const_) &&
-                !fd.isGenerated())
-            {
-                import dmd.errors : lint;
-                lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
-            }
-
             const errors = global.startGagging();
             fd.semantic3(fd._scope);
-            if (global.endGagging(errors))
+            bool hadErrors = global.endGagging(errors);
+
+            checkConstSpecial(fd);
+
+            if (hadErrors)
                 fd = errFd;
         }
     }
@@ -1815,34 +1796,16 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     runSemantic(sd.xcmp, sd.xerrcmp);
 
     FuncDeclaration ftostr = search_toString(sd);
-    if (ftostr &&
-        ftostr._scope &&
-        ftostr.semanticRun < PASS.semantic3done)
+    if (ftostr && ftostr._scope && ftostr.semanticRun < PASS.semantic3done)
     {
-        if ((ftostr._scope.lintFlags & LintFlags.constSpecial) &&
-            !(ftostr.storage_class & STC.const_) &&
-            !ftostr.isGenerated())
-        {
-            import dmd.errors : lint;
-            lint(ftostr.loc, "special method `%s` should be marked as `const`", ftostr.toChars());
-        }
-
         ftostr.semantic3(ftostr._scope);
+        checkConstSpecial(ftostr);
     }
 
-    if (sd.xhash &&
-        sd.xhash._scope &&
-        sd.xhash.semanticRun < PASS.semantic3done)
+    if (sd.xhash && sd.xhash._scope && sd.xhash.semanticRun < PASS.semantic3done)
     {
-        if ((sd.xhash._scope.lintFlags & LintFlags.constSpecial) &&
-            !(sd.xhash.storage_class & STC.const_) &&
-            !sd.xhash.isGenerated())
-        {
-            import dmd.errors : lint;
-            lint(sd.xhash.loc, "special method `%s` should be marked as `const`", sd.xhash.toChars());
-        }
-
         sd.xhash.semantic3(sd.xhash._scope);
+        checkConstSpecial(sd.xhash);
     }
 
     if (sd.postblit &&
@@ -1950,6 +1913,31 @@ extern (D) bool checkClosure(FuncDeclaration fd)
             .errorSupplemental(v.loc, "`%s` declared here", v.toErrMsg());
     });
     return true;
+}
+
+private void checkConstSpecial(FuncDeclaration fd)
+{
+    if (!fd || !fd._scope || !(fd._scope.lintFlags & LintFlags.constSpecial))
+        return;
+
+    if (!fd.isMember() || !fd.toParent2().isStructDeclaration())
+        return;
+
+    if (fd.ident != Id.opEquals && fd.ident != Id.opCmp &&
+        fd.ident != Id.tohash && fd.ident != Id.tostring)
+        return;
+
+    if (fd.isGenerated())
+        return;
+
+    if (fd.isStatic())
+        return;
+
+    if (!(fd.storage_class & STC.const_))
+    {
+        import dmd.errors : lint;
+        lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
+    }
 }
 
 /// For an outer function `fd`, find inner functions that cause a closure to be generated for it.

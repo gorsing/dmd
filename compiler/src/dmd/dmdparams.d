@@ -10,6 +10,7 @@
  */
 
 module dmd.dmdparams;
+pragma(lint, constSpecial):
 
 import dmd.target;
 

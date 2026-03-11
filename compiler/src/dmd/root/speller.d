@@ -12,6 +12,7 @@
  */
 
 module dmd.root.speller;
+pragma(lint, constSpecial):
 
 /**************************************************
  * Looks for correct spelling.

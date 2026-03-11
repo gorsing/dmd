@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/ast_node.d
  */
 module dmd.ast_node;
+pragma(lint, constSpecial):
 
 import dmd.rootobject : RootObject;
 import dmd.visitor : Visitor;

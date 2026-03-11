@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.cdef;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_cdef.html
 

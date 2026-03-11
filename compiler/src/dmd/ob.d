@@ -11,6 +11,7 @@
  */
 
 module dmd.ob;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio : printf;
 import core.stdc.stdlib;

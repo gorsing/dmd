@@ -15,6 +15,7 @@
  */
 
 module dmd.impcnvtab;
+pragma(lint, constSpecial):
 
 import dmd.astenums;
 import dmd.mtype;

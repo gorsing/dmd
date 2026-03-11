@@ -10,6 +10,7 @@
  */
 
 module dmd.stmtstate;
+pragma(lint, constSpecial):
 
 import dmd.identifier;
 import dmd.statement;

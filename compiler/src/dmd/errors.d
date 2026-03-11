@@ -10,6 +10,7 @@
  */
 
 module dmd.errors;
+pragma(lint, constSpecial):
 
 public import core.stdc.stdarg;
 public import dmd.root.string: fTuple;

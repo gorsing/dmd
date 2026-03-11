@@ -12,6 +12,7 @@
  */
 
 module dmd.dstruct;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

@@ -9,6 +9,7 @@
  */
 
 module dmd.mustuse;
+pragma(lint, constSpecial):
 
 import dmd.dscope;
 import dmd.dsymbol;

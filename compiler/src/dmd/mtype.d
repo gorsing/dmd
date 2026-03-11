@@ -10,6 +10,7 @@
  */
 
 module dmd.mtype;
+pragma(lint, constSpecial):
 
 import core.checkedint;
 import core.stdc.stdarg;

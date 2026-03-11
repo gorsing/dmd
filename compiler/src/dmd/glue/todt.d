@@ -11,6 +11,7 @@
  */
 
 module dmd.glue.todt;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

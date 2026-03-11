@@ -10,6 +10,7 @@
  */
 
 module dmd.root.aav;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import dmd.root.rmem;

@@ -45,6 +45,7 @@
  */
 
 module dmd.nspace;
+pragma(lint, constSpecial):
 
 import dmd.arraytypes;
 import dmd.dsymbol;

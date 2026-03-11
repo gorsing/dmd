@@ -12,6 +12,7 @@
  */
 
 module dmd.builtin;
+pragma(lint, constSpecial):
 
 import dmd.arraytypes;
 import dmd.astenums;

@@ -11,6 +11,7 @@
  */
 
 module dmd.root.array;
+pragma(lint, constSpecial):
 
 import core.stdc.stdlib : _compare_fp_t;
 import core.stdc.string;

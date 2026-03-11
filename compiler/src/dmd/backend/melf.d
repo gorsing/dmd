@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.melf;
+pragma(lint, constSpecial):
 
 /* ELF file format */
 

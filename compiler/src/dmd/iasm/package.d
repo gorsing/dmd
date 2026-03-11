@@ -12,6 +12,7 @@
  */
 
 module dmd.iasm;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

@@ -12,6 +12,7 @@
  */
 
 module dmd.objc;
+pragma(lint, constSpecial):
 
 import dmd.aggregate;
 import dmd.arraytypes;

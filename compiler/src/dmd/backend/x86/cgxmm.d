@@ -13,6 +13,7 @@
  */
 
 module dmd.backend.x86.cgxmm;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

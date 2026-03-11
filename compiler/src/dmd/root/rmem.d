@@ -10,6 +10,7 @@
  */
 
 module dmd.root.rmem;
+pragma(lint, constSpecial):
 
 import core.exception : onOutOfMemoryError;
 import core.stdc.stdio;

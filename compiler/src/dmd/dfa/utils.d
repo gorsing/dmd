@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dfa/utils.d
  */
 module dmd.dfa.utils;
+pragma(lint, constSpecial):
 import dmd.tokens;
 import dmd.astenums;
 import dmd.mtype;

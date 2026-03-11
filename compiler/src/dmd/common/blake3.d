@@ -1,4 +1,5 @@
 module dmd.common.blake3;
+pragma(lint, constSpecial):
 // based on https://github.com/oconnor663/blake3_reference_impl_c/blob/main/reference_impl.c
 
 @safe:

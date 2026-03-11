@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.cg;
+pragma(lint, constSpecial):
 
 import dmd.backend.cdef;
 import dmd.backend.cc;

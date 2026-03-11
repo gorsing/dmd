@@ -10,6 +10,7 @@
  */
 
 module dmd.targetcompiler;
+pragma(lint, constSpecial):
 
 version (IN_GCC) {}        // compiler is being built with gdc
 else version (IN_LLVM) {}  // compiler is being built with ldc

@@ -10,6 +10,7 @@
  */
 
 module dmd.initsem;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.checkedint;

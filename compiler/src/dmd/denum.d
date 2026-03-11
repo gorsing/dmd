@@ -13,6 +13,7 @@
  */
 
 module dmd.denum;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

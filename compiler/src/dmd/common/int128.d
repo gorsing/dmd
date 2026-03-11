@@ -11,6 +11,7 @@
  */
 
 module dmd.common.int128;
+pragma(lint, constSpecial):
 
 nothrow:
 @safe:

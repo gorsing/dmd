@@ -12,6 +12,7 @@
  */
 
 module dmd.nogc;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

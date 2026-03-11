@@ -11,6 +11,7 @@
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/compiler/src/dmd/backend/ee.d, backend/ee.d)
  */
 module dmd.backend.ee;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

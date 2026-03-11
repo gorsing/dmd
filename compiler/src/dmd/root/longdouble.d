@@ -10,6 +10,7 @@
  */
 
 module dmd.root.longdouble;
+pragma(lint, constSpecial):
 
 version (CRuntime_Microsoft)
 {

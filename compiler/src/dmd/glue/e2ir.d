@@ -10,6 +10,7 @@
  */
 
 module dmd.glue.e2ir;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stddef;

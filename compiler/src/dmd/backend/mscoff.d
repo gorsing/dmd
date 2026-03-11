@@ -5,6 +5,7 @@
  */
 
 module dmd.backend.mscoff;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_mscoff.html
 

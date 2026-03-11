@@ -10,6 +10,7 @@
  */
 
 module dmd.root.utf;
+pragma(lint, constSpecial):
 
 @nogc nothrow pure @safe:
 

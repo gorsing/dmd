@@ -10,6 +10,7 @@
  */
 
 module dmd.printast;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

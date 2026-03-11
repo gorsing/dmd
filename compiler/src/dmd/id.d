@@ -10,6 +10,7 @@
  */
 
 module dmd.id;
+pragma(lint, constSpecial):
 
 import dmd.identifier;
 import dmd.tokens;

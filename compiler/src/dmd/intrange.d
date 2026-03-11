@@ -10,6 +10,7 @@
  */
 
 module dmd.intrange;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 
