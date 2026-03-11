@@ -1796,18 +1796,6 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     {
         if (fd && fd._scope && fd.semanticRun < PASS.semantic3done)
         {
-            if (fd._scope.lintFlags & LintFlags.constSpecial)
-            {
-                bool isStatic = (fd.storage_class & STC.static_) != 0;
-                bool isConstMethod = (fd.storage_class & STC.const_) != 0 ||
-                                     (fd.type && fd.type.isConst());
-
-                if (!isStatic && !isConstMethod && !fd.isGenerated())
-                {
-                    import dmd.errors : lint;
-                    lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
-                }
-            }
             if ((fd._scope.lintFlags & LintFlags.constSpecial) &&
                 !(fd.storage_class & STC.const_) &&
                 !fd.isGenerated())
