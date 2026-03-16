@@ -13,6 +13,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/cli.d
  */
 module dmd.cli;
+pragma(lint, constSpecial):
 
 nothrow @safe:
 

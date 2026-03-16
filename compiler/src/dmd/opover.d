@@ -12,6 +12,7 @@
  */
 
 module dmd.opover;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import dmd.aggregate;

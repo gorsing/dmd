@@ -14,6 +14,7 @@
  */
 
 module dmd.constfold;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import core.stdc.stdio;

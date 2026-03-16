@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/common/bitfields.d
  */
 module dmd.common.bitfields;
+pragma(lint, constSpecial):
 
 nothrow:
 @safe:

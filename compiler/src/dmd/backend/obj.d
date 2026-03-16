@@ -10,6 +10,7 @@
  */
 
 module dmd.backend.obj;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_obj.html
 

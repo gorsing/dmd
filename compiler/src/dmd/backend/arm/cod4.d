@@ -22,6 +22,7 @@
  */
 
 module dmd.backend.arm.cod4;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

@@ -13,6 +13,7 @@
  */
 
 module dmd.mars;
+pragma(lint, constSpecial):
 
 import core.stdc.ctype;
 import core.stdc.stdio;

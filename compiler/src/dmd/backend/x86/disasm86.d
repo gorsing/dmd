@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.x86.disasm86;
+pragma(lint, constSpecial):
 
 nothrow @nogc:
 

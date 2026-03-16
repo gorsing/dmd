@@ -12,6 +12,7 @@
 
 
 module dmd.backend.mem;
+pragma(lint, constSpecial):
 
 import core.stdc.stdlib : malloc, calloc, realloc, free;
 import core.stdc.string : strdup;

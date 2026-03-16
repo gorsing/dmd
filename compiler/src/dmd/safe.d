@@ -12,6 +12,7 @@
  */
 
 module dmd.safe;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

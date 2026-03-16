@@ -12,6 +12,7 @@
  */
 
 module dmd.expressionsem;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

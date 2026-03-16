@@ -5,6 +5,7 @@
  */
 
 module dmd.backend.mach;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_mach.html
 // location of system .h files on Mac: xcrun --show-sdk-path

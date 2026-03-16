@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dfa/fast/structure.d
  */
 module dmd.dfa.fast.structure;
+pragma(lint, constSpecial):
 import dmd.dfa.utils;
 import dmd.common.outbuffer;
 import dmd.declaration;

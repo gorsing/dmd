@@ -4,6 +4,7 @@
  */
 
 module dmd.visitor.transitive;
+pragma(lint, constSpecial):
 
 import dmd.astenums;
 import dmd.visitor.permissive;

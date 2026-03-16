@@ -12,6 +12,7 @@
  */
 
 module dmd.importc;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

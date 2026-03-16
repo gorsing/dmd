@@ -10,6 +10,7 @@
  */
 
 module dmd.root.stringtable;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import dmd.root.rmem, dmd.root.hash;

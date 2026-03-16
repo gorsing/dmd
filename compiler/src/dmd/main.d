@@ -15,6 +15,7 @@
  */
 
 module dmd.main;
+pragma(lint, constSpecial):
 
 version (NoMain) {} else
 {

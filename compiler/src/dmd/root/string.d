@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/root/string.d
  */
 module dmd.root.string;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import dmd.root.rmem;

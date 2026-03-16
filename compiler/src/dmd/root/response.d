@@ -13,6 +13,7 @@
  */
 
 module dmd.root.response;
+pragma(lint, constSpecial):
 
 import dmd.root.file;
 import dmd.root.filename;

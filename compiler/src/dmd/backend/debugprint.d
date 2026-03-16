@@ -13,6 +13,7 @@
  */
 
 module dmd.backend.debugprint;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

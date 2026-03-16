@@ -10,6 +10,7 @@
  */
 
 module dmd.lib.mscoff;
+pragma(lint, constSpecial):
 
 import core.stdc.stdlib;
 import core.stdc.string;

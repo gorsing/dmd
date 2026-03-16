@@ -10,6 +10,7 @@
  */
 
 module dmd.iasm.gcc;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 

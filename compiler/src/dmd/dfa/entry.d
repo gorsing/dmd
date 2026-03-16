@@ -22,6 +22,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dfa/entry.d
  */
 module dmd.dfa.entry;
+pragma(lint, constSpecial):
 import dmd.common.outbuffer;
 import dmd.func;
 import dmd.astenums;

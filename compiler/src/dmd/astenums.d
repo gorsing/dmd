@@ -9,6 +9,7 @@
  */
 
 module dmd.astenums;
+pragma(lint, constSpecial):
 
 enum Sizeok : ubyte
 {

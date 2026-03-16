@@ -13,6 +13,7 @@
  */
 
 module dmd.backend.arm.instr;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

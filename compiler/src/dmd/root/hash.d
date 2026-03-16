@@ -10,6 +10,7 @@
  */
 
 module dmd.root.hash;
+pragma(lint, constSpecial):
 
 nothrow:
 @safe:

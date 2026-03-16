@@ -10,6 +10,7 @@
  */
 
 module dmd.backend.cv4;
+pragma(lint, constSpecial):
 
 @safe:
 

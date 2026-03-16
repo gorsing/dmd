@@ -10,6 +10,7 @@
  */
 
 module dmd.root.complex;
+pragma(lint, constSpecial):
 
 import dmd.root.ctfloat;
 

@@ -5,6 +5,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/src/dmd/astcodegen.d
  */
 module dmd.astcodegen;
+pragma(lint, constSpecial):
 
 
 struct ASTCodegen

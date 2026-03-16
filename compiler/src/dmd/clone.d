@@ -11,6 +11,7 @@
  */
 
 module dmd.clone;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import dmd.aggregate;

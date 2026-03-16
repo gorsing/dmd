@@ -10,6 +10,7 @@
  */
 
 module dmd.enumsem;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

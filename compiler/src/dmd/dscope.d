@@ -12,6 +12,7 @@
  */
 
 module dmd.dscope;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;
@@ -41,6 +42,15 @@ enum Contract : ubyte
     invariant_ = 1,
     require = 2, // in contract
     ensure = 3, // out contract
+}
+
+/// Active linting rules for the current scope
+extern (C++)
+enum LintFlags : uint
+{
+    none         = 0,
+    constSpecial = 1 << 0, // Enforce `const` on special methods (opEquals, etc.)
+    all          = ~0
 }
 
 /// Bitfield for settable/copyable flags, see `copyFlagsFrom`, `resetAllFlags`
@@ -185,6 +195,8 @@ extern (C++) struct Scope
     private ushort bitFields2;
     mixin(generateBitFields!(NonFlagBitFields, ushort, "bitFields2"));
     Previews previews;
+
+    LintFlags lintFlags;
 
     // user defined attributes
     UserAttributeDeclaration userAttribDecl;

@@ -10,6 +10,7 @@
  */
 
 module dmd.lib.elf;
+pragma(lint, constSpecial):
 
 import core.stdc.time;
 import core.stdc.string;

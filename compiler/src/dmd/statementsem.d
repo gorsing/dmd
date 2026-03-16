@@ -12,6 +12,7 @@
  */
 
 module dmd.statementsem;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

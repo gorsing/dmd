@@ -12,6 +12,7 @@
  */
 
 module dmd.imphint;
+pragma(lint, constSpecial):
 
 /******************************************
  * Looks for undefined identifier s to see

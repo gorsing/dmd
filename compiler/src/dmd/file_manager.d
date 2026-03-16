@@ -9,6 +9,7 @@
  */
 
 module dmd.file_manager;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import dmd.common.outbuffer;

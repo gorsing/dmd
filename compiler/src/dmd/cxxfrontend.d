@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/cxxfrontend.d
  */
 module dmd.cxxfrontend;
+pragma(lint, constSpecial):
 
 import dmd.aggregate : AggregateDeclaration;
 import dmd.arraytypes;

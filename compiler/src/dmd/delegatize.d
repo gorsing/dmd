@@ -12,6 +12,7 @@
  */
 
 module dmd.delegatize;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import dmd.astenums;

@@ -12,6 +12,7 @@
  */
 
 module dmd.aliasthis;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

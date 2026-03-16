@@ -25,6 +25,7 @@
 // C++ specific routines
 
 module dmd.backend.inliner;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.ctype;

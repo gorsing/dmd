@@ -12,6 +12,7 @@
  */
 
 module dmd.semantic3;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;
@@ -295,6 +296,8 @@ private extern(C++) final class Semantic3Visitor : Visitor
         funcdecl.semanticRun = PASS.semantic3;
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
+
+                checkConstSpecial(funcdecl);
 
         if (!funcdecl.type || funcdecl.type.ty != Tfunction)
             return;
@@ -1780,7 +1783,11 @@ void semanticTypeInfoMembers(StructDeclaration sd)
         {
             const errors = global.startGagging();
             fd.semantic3(fd._scope);
-            if (global.endGagging(errors))
+            bool hadErrors = global.endGagging(errors);
+
+            checkConstSpecial(fd);
+
+            if (hadErrors)
                 fd = errFd;
         }
     }
@@ -1788,20 +1795,17 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     runSemantic(sd.xeq, sd.xerreq);
     runSemantic(sd.xcmp, sd.xerrcmp);
 
-
     FuncDeclaration ftostr = search_toString(sd);
-    if (ftostr &&
-        ftostr._scope &&
-        ftostr.semanticRun < PASS.semantic3done)
+    if (ftostr && ftostr._scope && ftostr.semanticRun < PASS.semantic3done)
     {
         ftostr.semantic3(ftostr._scope);
+        checkConstSpecial(ftostr);
     }
 
-    if (sd.xhash &&
-        sd.xhash._scope &&
-        sd.xhash.semanticRun < PASS.semantic3done)
+    if (sd.xhash && sd.xhash._scope && sd.xhash.semanticRun < PASS.semantic3done)
     {
         sd.xhash.semantic3(sd.xhash._scope);
+        checkConstSpecial(sd.xhash);
     }
 
     if (sd.postblit &&
@@ -1909,6 +1913,31 @@ extern (D) bool checkClosure(FuncDeclaration fd)
             .errorSupplemental(v.loc, "`%s` declared here", v.toErrMsg());
     });
     return true;
+}
+
+private void checkConstSpecial(FuncDeclaration fd)
+{
+    if (!fd || !fd._scope || !(fd._scope.lintFlags & LintFlags.constSpecial))
+        return;
+
+    if (!fd.isMember() || !fd.toParent2().isStructDeclaration())
+        return;
+
+    if (fd.ident != Id.opEquals && fd.ident != Id.opCmp &&
+        fd.ident != Id.tohash && fd.ident != Id.tostring)
+        return;
+
+    if (fd.isGenerated())
+        return;
+
+    if (fd.isStatic())
+        return;
+
+    if (!(fd.storage_class & STC.const_))
+    {
+        import dmd.errors : lint;
+        lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
+    }
 }
 
 /// For an outer function `fd`, find inner functions that cause a closure to be generated for it.

@@ -10,6 +10,7 @@
  */
 
 module dmd.root.file;
+pragma(lint, constSpecial):
 
 import core.stdc.errno;
 import core.stdc.stdio;

@@ -8,6 +8,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/mangle/basic.d
  */
 module dmd.mangle.basic;
+pragma(lint, constSpecial):
 
 import dmd.astenums;
 import dmd.common.outbuffer : OutBuffer;

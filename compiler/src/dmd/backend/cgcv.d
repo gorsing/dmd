@@ -14,6 +14,7 @@
 /* Header for cgcv.c    */
 
 module dmd.backend.cgcv;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_cgcv.html
 

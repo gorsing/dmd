@@ -15,6 +15,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/backend/x86/cod5.d
  */
 module dmd.backend.x86.cod5;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

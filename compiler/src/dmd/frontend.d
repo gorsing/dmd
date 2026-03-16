@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/frontend.d
  */
 module dmd.frontend;
+pragma(lint, constSpecial):
 
 import dmd.astcodegen : ASTCodegen;
 import dmd.astenums : CHECKENABLE;

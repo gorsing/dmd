@@ -20,6 +20,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dfa/fast/analysis.d
  */
 module dmd.dfa.fast.analysis;
+pragma(lint, constSpecial):
 import dmd.dfa.fast.structure;
 import dmd.dfa.fast.report;
 import dmd.dfa.utils;

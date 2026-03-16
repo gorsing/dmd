@@ -10,6 +10,7 @@
  */
 
 module dmd.errorsink;
+pragma(lint, constSpecial):
 
 import core.stdc.stdarg;
 

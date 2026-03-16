@@ -10,6 +10,7 @@
  */
 
 module dmd.visitor.statement_rewrite_walker;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

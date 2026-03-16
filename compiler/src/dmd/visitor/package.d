@@ -10,6 +10,7 @@
  */
 
 module dmd.visitor;
+pragma(lint, constSpecial):
 
 import dmd.astcodegen;
 import dmd.tokens;

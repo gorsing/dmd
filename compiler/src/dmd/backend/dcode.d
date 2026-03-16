@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.dcode;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.stdlib;

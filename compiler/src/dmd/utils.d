@@ -10,6 +10,7 @@
  */
 
 module dmd.utils;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import dmd.errors;

@@ -12,6 +12,7 @@
  */
 
 module dmd.doc;
+pragma(lint, constSpecial):
 
 import core.stdc.ctype;
 import core.stdc.stdlib;

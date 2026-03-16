@@ -10,6 +10,7 @@
  */
 
 module dmd.staticcond;
+pragma(lint, constSpecial):
 
 import dmd.expression;
 import dmd.root.array;

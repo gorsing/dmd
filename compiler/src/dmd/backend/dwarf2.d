@@ -7,6 +7,7 @@
  */
 
 module dmd.backend.dwarf2;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_dwarf2.html
 

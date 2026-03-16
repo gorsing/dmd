@@ -10,6 +10,7 @@
  */
 
 module dmd.typinf;
+pragma(lint, constSpecial):
 
 import dmd.astenums;
 import dmd.declaration;

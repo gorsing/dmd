@@ -11,6 +11,7 @@
  */
 
 module dmd.backend.dvarstats;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import core.stdc.stdlib;

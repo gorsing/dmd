@@ -10,6 +10,7 @@
  */
 
 module dmd.visitor.postorder;
+pragma(lint, constSpecial):
 
 import dmd.dtemplate;
 import dmd.expression;

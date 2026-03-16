@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/chkformat.d
  */
 module dmd.chkformat;
+pragma(lint, constSpecial):
 
 //import core.stdc.stdio : printf, scanf;
 import core.stdc.ctype : isdigit;

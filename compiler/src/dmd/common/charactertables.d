@@ -11,6 +11,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/common/charactertables.d
  */
 module dmd.common.charactertables;
+pragma(lint, constSpecial):
 
 @safe nothrow @nogc pure:
 

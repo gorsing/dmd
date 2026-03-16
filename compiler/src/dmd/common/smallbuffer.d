@@ -9,6 +9,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/common/smallbuffer.d
  */
 module dmd.common.smallbuffer;
+pragma(lint, constSpecial):
 
 nothrow:
 

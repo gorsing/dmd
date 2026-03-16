@@ -12,6 +12,7 @@
  */
 
 module dmd.traits;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

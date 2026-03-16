@@ -11,6 +11,7 @@
  */
 
 module dmd.backend.fp;
+pragma(lint, constSpecial):
 
 import core.stdc.math;
 import core.stdc.fenv;

@@ -9,6 +9,7 @@
  */
 
 module dmd.root.env;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 import core.sys.posix.stdlib;

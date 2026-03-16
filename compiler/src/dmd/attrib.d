@@ -23,6 +23,7 @@
  */
 
 module dmd.attrib;
+pragma(lint, constSpecial):
 
 import dmd.arraytypes;
 import dmd.astenums;

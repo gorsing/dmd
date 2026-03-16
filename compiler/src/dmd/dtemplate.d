@@ -37,6 +37,7 @@
  */
 
 module dmd.dtemplate;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;
@@ -938,7 +939,7 @@ extern (C++) class TemplateInstance : ScopeDsymbol
                     return &errorSupplemental;
                 case Classification.deprecation:
                     return &deprecationSupplemental;
-                case Classification.gagged, Classification.tip, Classification.warning:
+                case Classification.gagged, Classification.tip, Classification.warning, Classification.lint:
                     assert(0);
             }
         }();

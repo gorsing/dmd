@@ -10,6 +10,7 @@
  */
 
 module dmd.dcast;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

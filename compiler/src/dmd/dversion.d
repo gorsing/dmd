@@ -13,6 +13,7 @@
  */
 
 module dmd.dversion;
+pragma(lint, constSpecial):
 
 import dmd.dsymbol;
 import dmd.identifier;

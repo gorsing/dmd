@@ -11,6 +11,7 @@
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/compiler/src/dmd/backend/divcoeff.d, backend/divcoeff.d)
  */
 module dmd.backend.divcoeff;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

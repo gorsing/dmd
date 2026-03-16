@@ -10,6 +10,7 @@
  */
 
 module dmd.blockexit;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

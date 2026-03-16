@@ -12,6 +12,7 @@
  */
 
 module dmd.entity;
+pragma(lint, constSpecial):
 
 import core.stdc.ctype;
 

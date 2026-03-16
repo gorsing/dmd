@@ -10,6 +10,7 @@
  */
 
 module dmd.compiler;
+pragma(lint, constSpecial):
 
 import core.stdc.string;
 

@@ -12,6 +12,7 @@
  */
 
 module dmd.backend.type;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_type.html
 

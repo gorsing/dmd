@@ -16,6 +16,7 @@
  */
 
 module dmd.backend.arm.cod1;
+pragma(lint, constSpecial):
 
 import core.bitop;
 import core.stdc.stdio;

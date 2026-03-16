@@ -10,6 +10,7 @@
  */
 
 module dmd.backend.bcomplex;
+pragma(lint, constSpecial):
 
 public import dmd.root.longdouble : targ_real = longdouble;
 import core.stdc.math : fabs, fabsl, sqrt;

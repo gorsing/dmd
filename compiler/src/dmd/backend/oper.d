@@ -10,6 +10,7 @@
  */
 
 module dmd.backend.oper;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_oper.html
 

@@ -9,6 +9,7 @@
  */
 
 module dmd.astbase;
+pragma(lint, constSpecial):
 
 import dmd.astenums;
 import dmd.visitor.parsetime;

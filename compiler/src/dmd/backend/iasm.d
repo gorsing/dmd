@@ -11,6 +11,7 @@
  */
 
 module dmd.backend.iasm;
+pragma(lint, constSpecial):
 
 // Online documentation: https://dlang.org/phobos/dmd_backend_iasm.html
 

@@ -10,6 +10,7 @@
  */
 
 module dmd.argtypes_x86;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.checkedint;

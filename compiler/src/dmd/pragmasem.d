@@ -12,6 +12,7 @@
  */
 
 module dmd.pragmasem;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;
@@ -206,6 +207,10 @@ void pragmaDeclSemantic(PragmaDeclaration pd, Scope* sc)
             .error(pd.loc, "%s `%s` takes no argument", pd.kind, pd.toPrettyChars);
         return declarations();
     }
+    else if (pd.ident == Id.lint)
+    {
+        return declarations();
+    }
     else if (!global.params.ignoreUnsupportedPragmas)
     {
         error(pd.loc, "unrecognized `pragma(%s)`", pd.ident.toChars());
@@ -328,6 +333,9 @@ bool pragmaStmtSemantic(PragmaStatement ps, Scope* sc)
         Dsymbols decls = de ? Dsymbols(de.declaration) : Dsymbols();
         if (!pragmaMangleSemantic(ps.loc, sc, ps.args, decls.length ? &decls : null))
             return false;
+    }
+    else if (ps.ident == Id.lint)
+    {
     }
     else if (!global.params.ignoreUnsupportedPragmas)
     {

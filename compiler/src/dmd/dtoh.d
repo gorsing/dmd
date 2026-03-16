@@ -10,6 +10,7 @@
  * Coverage:    https://codecov.io/gh/dlang/dmd/src/master/compiler/src/dmd/dtoh.d
  */
 module dmd.dtoh;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

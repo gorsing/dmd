@@ -9,6 +9,7 @@
  */
 
 module dmd.backend.dwarf;
+pragma(lint, constSpecial):
 
 import dmd.backend.cc;
 import dmd.backend.cdef;

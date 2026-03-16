@@ -9,6 +9,7 @@
  */
 
 module dmd.root.strtold;
+pragma(lint, constSpecial):
 
 import dmd.root.longdouble;
 import core.stdc.ctype;

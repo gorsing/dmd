@@ -10,6 +10,7 @@
  */
 
 module dmd.id;
+pragma(lint, constSpecial):
 
 import dmd.identifier;
 import dmd.tokens;
@@ -307,6 +308,10 @@ immutable Msgtable[] msgtable =
     { "Pinline", "inline" },
     { "lib" },
     { "linkerDirective" },
+    { "lint" },
+    { "constSpecial" },
+    { "none" },
+    { "all" },
     { "mangle" },
     { "msg" },
     { "startaddress" },

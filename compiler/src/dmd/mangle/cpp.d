@@ -18,6 +18,7 @@
  */
 
 module dmd.mangle.cpp;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

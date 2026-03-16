@@ -12,6 +12,7 @@
  */
 
 module dmd.canthrow;
+pragma(lint, constSpecial):
 
 import dmd.aggregate;
 import dmd.astenums;

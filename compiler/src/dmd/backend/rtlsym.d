@@ -13,6 +13,7 @@
  */
 
 module dmd.backend.rtlsym;
+pragma(lint, constSpecial):
 
 import dmd.backend.cc : Symbol;
 

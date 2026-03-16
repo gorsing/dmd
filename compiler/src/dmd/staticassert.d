@@ -12,6 +12,7 @@
  */
 
 module dmd.staticassert;
+pragma(lint, constSpecial):
 
 import dmd.arraytypes;
 import dmd.dsymbol;

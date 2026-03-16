@@ -12,6 +12,7 @@
  */
 
 module dmd.arrayop;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import dmd.arraytypes;

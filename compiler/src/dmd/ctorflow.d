@@ -10,6 +10,7 @@
  */
 
 module dmd.ctorflow;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 

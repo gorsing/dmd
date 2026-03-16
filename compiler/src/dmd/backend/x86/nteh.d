@@ -14,6 +14,7 @@
  */
 
 module dmd.backend.x86.nteh;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.string;

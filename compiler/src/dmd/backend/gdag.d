@@ -13,6 +13,7 @@
  */
 
 module dmd.backend.gdag;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import core.stdc.time;

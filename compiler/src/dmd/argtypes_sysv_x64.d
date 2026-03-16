@@ -10,6 +10,7 @@
  */
 
 module dmd.argtypes_sysv_x64;
+pragma(lint, constSpecial):
 
 import core.stdc.stdio;
 import dmd.astenums;
