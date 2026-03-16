@@ -308,7 +308,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
                     if (!(funcdecl.storage_class & STC.const_) && !funcdecl.type.isConst())
                     {
                         import dmd.errors : lint;
-                        lint(funcdecl.loc, "[constSpecial] special method `%s` should be marked as `const`", funcdecl.ident.toChars());
+                        lint(funcdecl.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, funcdecl.ident.toChars());
                     }
                 }
             }
@@ -1844,7 +1844,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
             !ftostr.isGenerated())
         {
             import dmd.errors : lint;
-            lint(ftostr.loc, "[constSpecial] special method `%s` should be marked as `const`", ftostr.toChars());
+            lint(ftostr.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, ftostr.toChars());
         }
 
         ftostr.semantic3(ftostr._scope);
@@ -1859,7 +1859,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
             !sd.xhash.isGenerated())
         {
             import dmd.errors : lint;
-            lint(sd.xhash.loc, "[constSpecial] special method `%s` should be marked as `const`", sd.xhash.toChars());
+            lint(sd.xhash.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, sd.xhash.toChars());
         }
 
         sd.xhash.semantic3(sd.xhash._scope);
