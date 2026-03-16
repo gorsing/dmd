@@ -308,7 +308,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
                     if (!(funcdecl.storage_class & STC.const_) && !funcdecl.type.isConst())
                     {
                         import dmd.errors : lint;
-                        lint(funcdecl.loc, "special method `%s` should be marked as `const`", funcdecl.ident.toChars());
+                        lint(funcdecl.loc, "[constSpecial] special method `%s` should be marked as `const`", funcdecl.ident.toChars());
                     }
                 }
             }

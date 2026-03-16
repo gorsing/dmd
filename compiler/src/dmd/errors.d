@@ -607,17 +607,33 @@ private extern(C++) void vreportDiagnostic(const SourceLoc loc, const(char)* for
         return;
 
     case ErrorKind.lint:
-        if (!global.gag)
-        {
-            info.headerColor = Classification.lint;
-            if (global.params.v.messageStyle == MessageStyle.sarif)
+            global.errors++;
+            if (!global.gag)
             {
-                addSarifDiagnostic(loc, format, ap, kind);
-                return;
+                info.headerColor = Classification.error;
+                if (global.params.v.messageStyle == MessageStyle.sarif)
+                {
+                    addSarifDiagnostic(loc, format, ap, kind);
+                    return;
+                }
+                printDiagnostic(format, ap, info);
+
+                if (global.params.v.errorLimit && global.errors >= global.params.v.errorLimit)
+                {
+                    fprintf(stderr, "error limit (%d) reached, use `-verrors=0` to show all\n", global.params.v.errorLimit);
+                    fatal();
+                }
             }
-            printDiagnostic(format, ap, info);
-        }
-        return;
+            else
+            {
+                if (global.params.v.showGaggedErrors)
+                {
+                    info.headerColor = Classification.gagged;
+                    printDiagnostic(format, ap, info);
+                }
+                global.gaggedErrors++;
+            }
+            return;
     }
 }
 
