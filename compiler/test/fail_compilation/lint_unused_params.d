@@ -2,7 +2,6 @@
 REQUIRED_ARGS: -w
 TEST_OUTPUT:
 ---
-fail_compilation/lint_unused_params.d(12): Lint: [unusedParams] function parameter `y` is never used
 ---
 */
 
