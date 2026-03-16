@@ -44,8 +44,7 @@ enum Contract : ubyte
 }
 
 /// Active linting rules for the current scope
-extern (C++)
-enum LintFlags : uint
+extern (C++) enum LintFlags : uint
 {
     none         = 0,
     constSpecial = 1 << 0, // Enforce `const` on special methods (opEquals, etc.)
