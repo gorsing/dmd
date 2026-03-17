@@ -48,6 +48,7 @@ extern (C++) enum LintFlags : uint
 {
     none         = 0,
     constSpecial = 1 << 0, // Enforce `const` on special methods (opEquals, etc.)
+    unusedParams = 1 << 1,
     all          = ~0
 }
 

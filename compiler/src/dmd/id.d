@@ -309,6 +309,7 @@ immutable Msgtable[] msgtable =
     { "linkerDirective" },
     { "lint" },
     { "constSpecial" },
+    { "unusedParams" },
     { "none" },
     { "all" },
     { "mangle" },

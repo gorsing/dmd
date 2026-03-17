@@ -308,7 +308,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
                     if (!(funcdecl.storage_class & STC.const_) && !funcdecl.type.isConst())
                     {
                         import dmd.errors : lint;
-                        lint(funcdecl.loc, "[constSpecial] special method `%s` should be marked as `const`", funcdecl.ident.toChars());
+                        lint(funcdecl.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, funcdecl.ident.toChars());
                     }
                 }
             }
@@ -1459,15 +1459,35 @@ private extern(C++) final class Semantic3Visitor : Visitor
             }
         }
 
+        // LINT: unusedParams
+        if ((sc.lintFlags & LintFlags.unusedParams) && funcdecl.fbody && funcdecl.parameters)
+        {
+            const bool isRequiredByInterface = funcdecl.isOverride() ||
+                                            (funcdecl.isVirtual() && !funcdecl.isFinal());
+
+            if (!isRequiredByInterface)
+            {
+                foreach (v; *funcdecl.parameters)
+                {
+                    if (v.ident && !v.wasUsed && !(v.storage_class & STC.temp))
+                    {
+                        import dmd.errors : lint;
+                        lint(v.loc, "unusedParams".ptr, "function parameter `%s` is never used".ptr, v.ident.toChars());
+                    }
+                }
+            }
+        }
         /* If this function had instantiated with gagging, error reproduction will be
          * done by TemplateInstance::semantic.
          * Otherwise, error gagging should be temporarily ungagged by functionSemantic3.
          */
         funcdecl.semanticRun = PASS.semantic3done;
+
         if ((global.errors != oldErrors) || (funcdecl.fbody && funcdecl.fbody.isErrorStatement()))
             funcdecl.hasSemantic3Errors = true;
         else
             funcdecl.hasSemantic3Errors = false;
+
         if (funcdecl.type.ty == Terror)
             funcdecl.errors = true;
         //printf("-FuncDeclaration::semantic3('%s.%s', sc = %p, loc = %s)\n", funcdecl.parent.toChars(), funcdecl.toChars(), sc, funcdecl.loc.toChars());
@@ -1801,7 +1821,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
                 !fd.isGenerated())
             {
                 import dmd.errors : lint;
-                lint(fd.loc, "special method `%s` should be marked as `const`", fd.toChars());
+                lint(fd.loc, "[constSpecial] special method `%s` should be marked as `const`", fd.toChars());
             }
 
             const errors = global.startGagging();
@@ -1824,7 +1844,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
             !ftostr.isGenerated())
         {
             import dmd.errors : lint;
-            lint(ftostr.loc, "special method `%s` should be marked as `const`", ftostr.toChars());
+            lint(ftostr.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, ftostr.toChars());
         }
 
         ftostr.semantic3(ftostr._scope);
@@ -1839,7 +1859,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
             !sd.xhash.isGenerated())
         {
             import dmd.errors : lint;
-            lint(sd.xhash.loc, "special method `%s` should be marked as `const`", sd.xhash.toChars());
+            lint(sd.xhash.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, sd.xhash.toChars());
         }
 
         sd.xhash.semantic3(sd.xhash._scope);
