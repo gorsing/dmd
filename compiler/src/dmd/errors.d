@@ -233,19 +233,19 @@ extern(C++) void errorBackend(const(char)* filename, uint linnum, uint charnum, 
  * ...    = printf-style variadic arguments
  */
 static if (__VERSION__ < 2092)
-    extern (C++) void lint(Loc loc, const(char)* format, ...)
+    extern (C++) void lint(Loc loc, const(char)* ruleName, const(char)* format, ...)
     {
         va_list ap;
         va_start(ap, format);
-        vreportDiagnostic(loc, format, ap, ErrorKind.lint);
+        vreportDiagnostic(loc, format, ap, ErrorKind.lint, ruleName);
         va_end(ap);
     }
 else
-    pragma(printf) extern (C++) void lint(Loc loc, const(char)* format, ...)
+    pragma(printf) extern (C++) void lint(Loc loc, const(char)* ruleName, const(char)* format, ...)
     {
         va_list ap;
         va_start(ap, format);
-        vreportDiagnostic(loc, format, ap, ErrorKind.lint);
+        vreportDiagnostic(loc, format, ap, ErrorKind.lint, ruleName);
         va_end(ap);
     }
 
@@ -610,7 +610,7 @@ private extern(C++) void vreportDiagnostic(const SourceLoc loc, const(char)* for
             global.errors++;
             if (!global.gag)
             {
-                info.headerColor = Classification.error;
+                info.headerColor = Classification.lint;
                 if (global.params.v.messageStyle == MessageStyle.sarif)
                 {
                     addSarifDiagnostic(loc, format, ap, kind);
@@ -762,8 +762,17 @@ private void printDiagnostic(const(char)* format, va_list ap, ref DiagnosticCont
     tmp.reset();
     if (info.p1)
     {
-        tmp.writestring(info.p1);
-        tmp.writestring(" ");
+        if (info.kind == ErrorKind.lint)
+        {
+            tmp.writeByte('[');
+            tmp.writestring(info.p1);
+            tmp.writestring("] ");
+        }
+        else
+        {
+            tmp.writestring(info.p1);
+            tmp.writestring(" ");
+        }
     }
     if (info.p2)
     {

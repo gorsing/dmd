@@ -8886,6 +8886,8 @@ private extern(C++) class NewScopeVisitor : Visitor
 
                     if (id.ident == Id.constSpecial)
                         sc.lintFlags |= LintFlags.constSpecial;
+                    else if (id.ident == Id.unusedParams)
+                        sc.lintFlags |= LintFlags.unusedParams;
                     else if (id.ident == Id.none)
                         sc.lintFlags = LintFlags.none;
                     else if (id.ident == Id.all)
