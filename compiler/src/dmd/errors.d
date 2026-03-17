@@ -610,7 +610,7 @@ private extern(C++) void vreportDiagnostic(const SourceLoc loc, const(char)* for
             global.errors++;
             if (!global.gag)
             {
-                info.headerColor = Classification.error;
+                info.headerColor = Classification.lint;
                 if (global.params.v.messageStyle == MessageStyle.sarif)
                 {
                     addSarifDiagnostic(loc, format, ap, kind);

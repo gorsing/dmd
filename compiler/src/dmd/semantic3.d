@@ -296,7 +296,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
 
-        if (sc.lintFlags & LintFlags.constSpecial)
+        if (funcdecl._scope && (funcdecl._scope.lintFlags & LintFlags.constSpecial))
         {
             if (funcdecl.ident == Id.opEquals || funcdecl.ident == Id.opCmp ||
                 funcdecl.ident == Id.tohash || funcdecl.ident == Id.tostring)
@@ -1460,7 +1460,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
         }
 
         // LINT: unusedParams
-        if ((sc.lintFlags & LintFlags.unusedParams) && funcdecl.fbody && funcdecl.parameters)
+        if (funcdecl._scope && (funcdecl._scope.lintFlags & LintFlags.unusedParams) && funcdecl.fbody && funcdecl.parameters)
         {
             const bool isRequiredByInterface = funcdecl.isOverride() ||
                                             (funcdecl.isVirtual() && !funcdecl.isFinal());
@@ -1469,7 +1469,9 @@ private extern(C++) final class Semantic3Visitor : Visitor
             {
                 foreach (v; *funcdecl.parameters)
                 {
-                    if (v.ident && !v.wasUsed && !(v.storage_class & STC.temp))
+                    bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
+
+                    if (v.ident && !v.wasUsed && !(v.storage_class & STC.temp) && !isIgnoredName)
                     {
                         import dmd.errors : lint;
                         lint(v.loc, "unusedParams".ptr, "function parameter `%s` is never used".ptr, v.ident.toChars());
