@@ -95,6 +95,61 @@ void semantic3(Dsymbol dsym, Scope* sc)
     dsym.accept(v);
 }
 
+/***************************************
+ * Checks if a special method should be marked as `const` and emits a lint warning.
+ */
+private void lintConstSpecial(FuncDeclaration fd, bool isKnownStructMember = false)
+{
+    if (!fd || !fd._scope || !(fd._scope.lintFlags & LintFlags.constSpecial))
+        return;
+
+    if (fd.isGenerated() || (fd.storage_class & STC.const_) || fd.type.isConst())
+        return;
+
+    if (!isKnownStructMember)
+    {
+        if (fd.ident != Id.opEquals && fd.ident != Id.opCmp &&
+            fd.ident != Id.tohash && fd.ident != Id.tostring)
+            return;
+
+        if (!fd.toParent2() || !fd.toParent2().isStructDeclaration())
+            return;
+    }
+
+    import dmd.errors : lint;
+
+    lint(fd.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, fd.ident ? fd.ident.toChars() : fd.toChars());
+}
+
+/***************************************
+ * Checks for unused parameters in a function and emits a lint warning.
+ */
+private void lintUnusedParams(FuncDeclaration funcdecl)
+{
+    if (!funcdecl || !funcdecl._scope || !(funcdecl._scope.lintFlags & LintFlags.unusedParams))
+        return;
+
+    if (!funcdecl.fbody || !funcdecl.parameters)
+        return;
+
+    const bool isRequiredByInterface = funcdecl.isOverride() ||
+                                       (funcdecl.isVirtual() && !funcdecl.isFinal());
+
+    if (isRequiredByInterface)
+        return;
+
+    foreach (v; *funcdecl.parameters)
+    {
+        bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
+
+        if (v.ident && !v.wasUsed && !(v.storage_class & STC.temp) && !isIgnoredName)
+        {
+            import dmd.errors : lint;
+            lint(v.loc, "unusedParams".ptr, "function parameter `%s` is never used".ptr, v.ident.toChars());
+        }
+    }
+}
+
 private extern(C++) final class Semantic3Visitor : Visitor
 {
     alias visit = Visitor.visit;
@@ -296,23 +351,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
 
-        if (funcdecl._scope && (funcdecl._scope.lintFlags & LintFlags.constSpecial))
-        {
-            if (funcdecl.ident == Id.opEquals || funcdecl.ident == Id.opCmp ||
-                funcdecl.ident == Id.tohash || funcdecl.ident == Id.tostring)
-            {
-                if (!funcdecl.isGenerated() &&
-                    funcdecl.toParent2() &&
-                    funcdecl.toParent2().isStructDeclaration())
-                {
-                    if (!(funcdecl.storage_class & STC.const_) && !funcdecl.type.isConst())
-                    {
-                        import dmd.errors : lint;
-                        lint(funcdecl.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, funcdecl.ident.toChars());
-                    }
-                }
-            }
-        }
+        lintConstSpecial(funcdecl);
 
         if (!funcdecl.type || funcdecl.type.ty != Tfunction)
             return;
@@ -1459,26 +1498,8 @@ private extern(C++) final class Semantic3Visitor : Visitor
             }
         }
 
-        // LINT: unusedParams
-        if (funcdecl._scope && (funcdecl._scope.lintFlags & LintFlags.unusedParams) && funcdecl.fbody && funcdecl.parameters)
-        {
-            const bool isRequiredByInterface = funcdecl.isOverride() ||
-                                            (funcdecl.isVirtual() && !funcdecl.isFinal());
+        lintUnusedParams(funcdecl);
 
-            if (!isRequiredByInterface)
-            {
-                foreach (v; *funcdecl.parameters)
-                {
-                    bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
-
-                    if (v.ident && !v.wasUsed && !(v.storage_class & STC.temp) && !isIgnoredName)
-                    {
-                        import dmd.errors : lint;
-                        lint(v.loc, "unusedParams".ptr, "function parameter `%s` is never used".ptr, v.ident.toChars());
-                    }
-                }
-            }
-        }
         /* If this function had instantiated with gagging, error reproduction will be
          * done by TemplateInstance::semantic.
          * Otherwise, error gagging should be temporarily ungagged by functionSemantic3.
@@ -1818,13 +1839,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     {
         if (fd && fd._scope && fd.semanticRun < PASS.semantic3done)
         {
-            if ((fd._scope.lintFlags & LintFlags.constSpecial) &&
-                !(fd.storage_class & STC.const_) &&
-                !fd.isGenerated())
-            {
-                import dmd.errors : lint;
-                lint(fd.loc, "[constSpecial] special method `%s` should be marked as `const`", fd.toChars());
-            }
+            lintConstSpecial(fd, true);
 
             const errors = global.startGagging();
             fd.semantic3(fd._scope);
@@ -1841,14 +1856,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
         ftostr._scope &&
         ftostr.semanticRun < PASS.semantic3done)
     {
-        if ((ftostr._scope.lintFlags & LintFlags.constSpecial) &&
-            !(ftostr.storage_class & STC.const_) &&
-            !ftostr.isGenerated())
-        {
-            import dmd.errors : lint;
-            lint(ftostr.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, ftostr.toChars());
-        }
-
+        lintConstSpecial(ftostr, true);
         ftostr.semantic3(ftostr._scope);
     }
 
@@ -1856,14 +1864,7 @@ void semanticTypeInfoMembers(StructDeclaration sd)
         sd.xhash._scope &&
         sd.xhash.semanticRun < PASS.semantic3done)
     {
-        if ((sd.xhash._scope.lintFlags & LintFlags.constSpecial) &&
-            !(sd.xhash.storage_class & STC.const_) &&
-            !sd.xhash.isGenerated())
-        {
-            import dmd.errors : lint;
-            lint(sd.xhash.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, sd.xhash.toChars());
-        }
-
+        lintConstSpecial(sd.xhash, true);
         sd.xhash.semantic3(sd.xhash._scope);
     }
 
