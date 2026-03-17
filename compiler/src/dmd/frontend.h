@@ -6639,6 +6639,8 @@ public:
     bool inAlignSection(bool v);
     bool systemInferred() const;
     bool systemInferred(bool v);
+    bool wasUsed() const;
+    bool wasUsed(bool v);
 private:
     uint32_t bitFields;
 public:
@@ -6977,6 +6979,7 @@ enum class LintFlags : uint32_t
 {
     none = 0u,
     constSpecial = 1u,
+    unusedParams = 2u,
     all = 4294967295u,
 };
 
@@ -8004,7 +8007,7 @@ extern void error(const char* filename, uint32_t linnum, uint32_t charnum, const
 
 extern void errorBackend(const char* filename, uint32_t linnum, uint32_t charnum, const char* format, ...);
 
-extern void lint(Loc loc, const char* format, ...);
+extern void lint(Loc loc, const char* ruleName, const char* format, ...);
 
 extern void errorSupplemental(Loc loc, const char* format, ...);
 
@@ -8736,6 +8739,7 @@ struct Id final
     static Identifier* linkerDirective;
     static Identifier* lint;
     static Identifier* constSpecial;
+    static Identifier* unusedParams;
     static Identifier* none;
     static Identifier* all;
     static Identifier* mangle;

@@ -228,9 +228,10 @@ extern(C++) void errorBackend(const(char)* filename, uint linnum, uint charnum, 
  * Print a lint message with the prefix and highlighting.
  * Does NOT increase error or warning counts.
  * Params:
- * loc    = location of message
- * format = printf-style format specification
- * ...    = printf-style variadic arguments
+ * loc      = location of message
+ * ruleName = name of the lint rule to display in brackets
+ * format   = printf-style format specification
+ * ...      = printf-style variadic arguments
  */
 static if (__VERSION__ < 2092)
     extern (C++) void lint(Loc loc, const(char)* ruleName, const(char)* format, ...)
