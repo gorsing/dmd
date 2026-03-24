@@ -2,10 +2,12 @@
 REQUIRED_ARGS: -w
 TEST_OUTPUT:
 ---
-fail_compilation/lint_const_special.d(18): Lint: [constSpecial] special method `opEquals` should be marked as `const`
-fail_compilation/lint_const_special.d(23): Lint: [constSpecial] special method `toHash` should be marked as `const`
-fail_compilation/lint_const_special.d(28): Lint: [constSpecial] special method `opCmp` should be marked as `const`
-fail_compilation/lint_const_special.d(33): Lint: [constSpecial] special method `toString` should be marked as `const`
+fail_compilation/lint_const_special.d(20): Warning: [constSpecial] special method `opEquals` should be marked as `const`
+fail_compilation/lint_const_special.d(25): Warning: [constSpecial] special method `toHash` should be marked as `const`
+fail_compilation/lint_const_special.d(30): Warning: [constSpecial] special method `opCmp` should be marked as `const`
+fail_compilation/lint_const_special.d(35): Warning: [constSpecial] special method `toString` should be marked as `const`
+Error: warnings are treated as errors
+       Use -wi if you wish to treat warnings only as informational.
 ---
 */
 

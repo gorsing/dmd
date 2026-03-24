@@ -13,9 +13,6 @@ import dmd.func;
 import dmd.id;
 import dmd.statement;
 import dmd.visitor;
-import dmd.dclass;
-import dmd.funcsem;
-import dmd.mtype;
 
 import dmd.errors : warning;
 
@@ -36,7 +33,7 @@ extern(C++) final class LintVisitor : Visitor
 
     this()
     {
-        flagsStack ~= LintFlags.none; 
+        flagsStack ~= LintFlags.none;
     }
 
     LintFlags currentFlags()
@@ -122,7 +119,7 @@ extern(C++) final class LintVisitor : Visitor
 
         if (checkUnused && fd.fbody && fd.parameters)
         {
-            const bool isRequiredByInterface = fd.isOverride() || (fd.isVirtual() && !fd.isFinal());
+            const bool isRequiredByInterface = fd.foverrides.length > 0;
             if (!isRequiredByInterface)
             {
                 foreach (v; *fd.parameters)
