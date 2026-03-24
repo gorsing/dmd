@@ -13,6 +13,7 @@ import dmd.func;
 import dmd.id;
 import dmd.statement;
 import dmd.visitor;
+import dmd.init;
 
 import dmd.errors : warning;
 
@@ -44,6 +45,26 @@ extern(C++) final class LintVisitor : Visitor
     override void visit(Dsymbol s) { }
     override void visit(Statement s) { }
     override void visit(Expression e) { }
+    override void visit(Initializer i) { }
+
+    override void visit(TemplateDeclaration td)
+    {
+        if (!td.members) return;
+        foreach (s; *td.members)
+            if (s) s.accept(this);
+    }
+
+    override void visit(DeclarationExp de)
+    {
+        if (de.declaration)
+            de.declaration.accept(this);
+    }
+
+    override void visit(AliasDeclaration ad)
+    {
+        if (ad.aliassym)
+            ad.aliassym.accept(this);
+    }
 
     override void visit(Module m)
     {
@@ -114,21 +135,43 @@ extern(C++) final class LintVisitor : Visitor
 
         bool checkUnused = (flags & LintFlags.unusedParams) != 0;
 
+        if (checkUnused)
+        {
+            if (!fd.fbody)
+            {
+                checkUnused = false;
+            }
+            else if (fd.vtblIndex != -1 && !fd.isFinalFunc())
+            {
+                checkUnused = false;
+            }
+            else if (fd.foverrides.length > 0)
+            {
+                checkUnused = false;
+            }
+            else
+            {
+                import dmd.astenums : LINK;
+                if (fd._linkage == LINK.c || fd._linkage == LINK.cpp || fd._linkage == LINK.windows)
+                {
+                    checkUnused = false;
+                }
+            }
+        }
+
         bool[VarDeclaration] oldTrack = unusedTrack;
         unusedTrack = null;
 
-        if (checkUnused && fd.fbody && fd.parameters)
+        if (checkUnused && fd.parameters)
         {
-            const bool isRequiredByInterface = fd.foverrides.length > 0;
-            if (!isRequiredByInterface)
+            // Используем индексный цикл, чтобы избежать бага с extern(C++) и делегатами D
+            for (size_t i = 0; i < fd.parameters.length; i++)
             {
-                foreach (v; *fd.parameters)
+                VarDeclaration v = (*fd.parameters)[i];
+                bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
+                if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
                 {
-                    bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
-                    if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
-                    {
-                        unusedTrack[v] = false;
-                    }
+                    unusedTrack[v] = false;
                 }
             }
         }
@@ -136,13 +179,18 @@ extern(C++) final class LintVisitor : Visitor
         if (fd.fbody)
             fd.fbody.accept(this);
 
-        if (checkUnused)
+        if (checkUnused && fd.parameters)
         {
-            foreach (v, used; unusedTrack)
+            // Используем индексный цикл, чтобы избежать бага с extern(C++) и делегатами D
+            for (size_t i = 0; i < fd.parameters.length; i++)
             {
-                if (!used)
+                VarDeclaration v = (*fd.parameters)[i];
+                if (bool* pUsed = v in unusedTrack)
                 {
-                    warning(v.loc, "[unusedParams] function parameter `%s` is never used", v.ident.toChars());
+                    if (!(*pUsed))
+                    {
+                        warning(v.loc, "[unusedParams] function parameter `%s` is never used", v.ident.toChars());
+                    }
                 }
             }
         }
@@ -207,7 +255,9 @@ extern(C++) final class LintVisitor : Visitor
         if (auto vd = ve.var.isVarDeclaration())
         {
             if (vd in unusedTrack)
+            {
                 unusedTrack[vd] = true;
+            }
         }
     }
 
@@ -260,6 +310,24 @@ extern(C++) final class LintVisitor : Visitor
         if (e.arguments)
             foreach (arg; *e.arguments)
                 if (arg) arg.accept(this);
+    }
+
+    override void visit(VarDeclaration vd)
+    {
+        if (vd._init)
+            vd._init.accept(this);
+    }
+
+    override void visit(ExpInitializer ei)
+    {
+        if (ei.exp)
+            ei.exp.accept(this);
+    }
+
+    override void visit(FuncExp fe)
+    {
+        if (fe.fd)
+            fe.fd.accept(this);
     }
 }
 

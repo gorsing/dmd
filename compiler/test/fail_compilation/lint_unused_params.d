@@ -2,12 +2,12 @@
 REQUIRED_ARGS: -w
 TEST_OUTPUT:
 ---
-fail_compilation/lint_unused_params.d(17): Warning: [unusedParams] function parameter `y` is never used
-fail_compilation/lint_unused_params.d(36): Warning: [unusedParams] function parameter `b` is never used
-fail_compilation/lint_unused_params.d(52): Warning: [unusedParams] function parameter `b` is never used
-fail_compilation/lint_unused_params.d(64): Warning: [unusedParams] function parameter `z` is never used
-fail_compilation/lint_unused_params.d(43): Warning: [unusedParams] function parameter `y` is never used
-fail_compilation/lint_unused_params.d(47): Error: template instance `lint_unused_params.tplFunc!int` error instantiating
+fail_compilation/lint_unused_params.d(18): Warning: [unusedParams] function parameter `y` is never used
+fail_compilation/lint_unused_params.d(38): Warning: [unusedParams] function parameter `b` is never used
+fail_compilation/lint_unused_params.d(47): Warning: [unusedParams] function parameter `y` is never used
+fail_compilation/lint_unused_params.d(51): Error: template instance `lint_unused_params.tplFunc!int` error instantiating
+fail_compilation/lint_unused_params.d(56): Warning: [unusedParams] function parameter `b` is never used
+fail_compilation/lint_unused_params.d(68): Warning: [unusedParams] function parameter `z` is never used
 Error: warnings are treated as errors
        Use -wi if you wish to treat warnings only as informational.
 ---
