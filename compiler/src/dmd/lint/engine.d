@@ -30,8 +30,7 @@ extern(C++) final class LintVisitor : Visitor
     alias visit = Visitor.visit;
 
     LintFlags[] flagsStack;
-    
-    // Надежный стек вместо ломающегося ассоциативного массива
+
     VarDeclaration[] activeParams;
     bool[] activeUsed;
 
@@ -154,7 +153,6 @@ extern(C++) final class LintVisitor : Visitor
             }
         }
 
-        // Запоминаем текущий размер стека, чтобы поддержать вложенные функции/лямбды
         size_t paramStart = activeParams.length;
 
         if (checkUnused && fd.parameters)
@@ -186,7 +184,6 @@ extern(C++) final class LintVisitor : Visitor
             }
         }
 
-        // Восстанавливаем стек
         activeParams.length = paramStart;
         activeUsed.length = paramStart;
     }
@@ -247,7 +244,6 @@ extern(C++) final class LintVisitor : Visitor
     {
         if (auto vd = ve.var.isVarDeclaration())
         {
-            // Ищем переменную в нашем надежном плоском стеке
             for (size_t i = 0; i < activeParams.length; i++)
             {
                 if (activeParams[i] == vd)
