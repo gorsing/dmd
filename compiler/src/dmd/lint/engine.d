@@ -13,6 +13,7 @@ import dmd.func;
 import dmd.id;
 import dmd.statement;
 import dmd.visitor;
+import dmd.init;
 
 import dmd.errors : warning;
 
@@ -29,7 +30,10 @@ extern(C++) final class LintVisitor : Visitor
     alias visit = Visitor.visit;
 
     LintFlags[] flagsStack;
-    bool[VarDeclaration] unusedTrack;
+    
+    // Надежный стек вместо ломающегося ассоциативного массива
+    VarDeclaration[] activeParams;
+    bool[] activeUsed;
 
     this()
     {
@@ -44,6 +48,26 @@ extern(C++) final class LintVisitor : Visitor
     override void visit(Dsymbol s) { }
     override void visit(Statement s) { }
     override void visit(Expression e) { }
+    override void visit(Initializer i) { }
+
+    override void visit(TemplateDeclaration td)
+    {
+        if (!td.members) return;
+        foreach (s; *td.members)
+            if (s) s.accept(this);
+    }
+
+    override void visit(DeclarationExp de)
+    {
+        if (de.declaration)
+            de.declaration.accept(this);
+    }
+
+    override void visit(AliasDeclaration ad)
+    {
+        if (ad.aliassym)
+            ad.aliassym.accept(this);
+    }
 
     override void visit(Module m)
     {
@@ -114,40 +138,57 @@ extern(C++) final class LintVisitor : Visitor
 
         bool checkUnused = (flags & LintFlags.unusedParams) != 0;
 
-        bool[VarDeclaration] oldTrack = unusedTrack;
-        unusedTrack = null;
-
-        if (checkUnused && fd.fbody && fd.parameters)
+        if (checkUnused)
         {
-            const bool isRequiredByInterface = fd.foverrides.length > 0;
-            if (!isRequiredByInterface)
+            if (!fd.fbody)
+                checkUnused = false;
+            else if (fd.vtblIndex != -1 && !fd.isFinalFunc())
+                checkUnused = false;
+            else if (fd.foverrides.length > 0)
+                checkUnused = false;
+            else
             {
-                foreach (v; *fd.parameters)
-                {
-                    bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
-                    if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
-                    {
-                        unusedTrack[v] = false;
-                    }
-                }
+                import dmd.astenums : LINK;
+                if (fd._linkage == LINK.c || fd._linkage == LINK.cpp || fd._linkage == LINK.windows)
+                    checkUnused = false;
+            }
+        }
+
+        // Запоминаем текущий размер стека, чтобы поддержать вложенные функции/лямбды
+        size_t paramStart = activeParams.length;
+
+        if (checkUnused && fd.parameters)
+        {
+            for (size_t i = 0; i < fd.parameters.length; i++)
+            {
+                activeParams ~= (*fd.parameters)[i];
+                activeUsed ~= false;
             }
         }
 
         if (fd.fbody)
             fd.fbody.accept(this);
 
-        if (checkUnused)
+        if (checkUnused && fd.parameters)
         {
-            foreach (v, used; unusedTrack)
+            for (size_t i = 0; i < fd.parameters.length; i++)
             {
-                if (!used)
+                size_t stackIdx = paramStart + i;
+                if (!activeUsed[stackIdx])
                 {
-                    warning(v.loc, "[unusedParams] function parameter `%s` is never used", v.ident.toChars());
+                    VarDeclaration v = (*fd.parameters)[i];
+                    bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
+                    if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
+                    {
+                        warning(v.loc, "[unusedParams] function parameter `%s` is never used", v.ident.toChars());
+                    }
                 }
             }
         }
 
-        unusedTrack = oldTrack;
+        // Восстанавливаем стек
+        activeParams.length = paramStart;
+        activeUsed.length = paramStart;
     }
 
     private void checkConstSpecial(FuncDeclaration fd)
@@ -206,8 +247,15 @@ extern(C++) final class LintVisitor : Visitor
     {
         if (auto vd = ve.var.isVarDeclaration())
         {
-            if (vd in unusedTrack)
-                unusedTrack[vd] = true;
+            // Ищем переменную в нашем надежном плоском стеке
+            for (size_t i = 0; i < activeParams.length; i++)
+            {
+                if (activeParams[i] == vd)
+                {
+                    activeUsed[i] = true;
+                    break;
+                }
+            }
         }
     }
 
@@ -260,6 +308,24 @@ extern(C++) final class LintVisitor : Visitor
         if (e.arguments)
             foreach (arg; *e.arguments)
                 if (arg) arg.accept(this);
+    }
+
+    override void visit(VarDeclaration vd)
+    {
+        if (vd._init)
+            vd._init.accept(this);
+    }
+
+    override void visit(ExpInitializer ei)
+    {
+        if (ei.exp)
+            ei.exp.accept(this);
+    }
+
+    override void visit(FuncExp fe)
+    {
+        if (fe.fd)
+            fe.fd.accept(this);
     }
 }
 
