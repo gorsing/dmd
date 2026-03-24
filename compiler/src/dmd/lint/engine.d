@@ -1,21 +1,23 @@
-/**
- * Copyright:   Copyright (C) 1999-2026 by The D Language Foundation, All Rights Reserved
- * Authors:     $(LINK2 https://www.digitalmars.com, Walter Bright)
- * License:     $(LINK2 https://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
- */
-
 module dmd.lint.engine;
 
+import dmd.aggregate;
+import dmd.arraytypes;
 import dmd.astenums;
 import dmd.attrib;
 import dmd.declaration;
+import dmd.dmodule;
 import dmd.dsymbol;
+import dmd.dtemplate;
 import dmd.expression;
 import dmd.func;
 import dmd.id;
 import dmd.statement;
 import dmd.visitor;
-import dmd.errors : lint;
+import dmd.dclass;
+import dmd.funcsem;
+import dmd.mtype;
+
+import dmd.errors : warning;
 
 extern (D) enum LintFlags : uint
 {
@@ -29,26 +31,18 @@ extern(C++) final class LintVisitor : Visitor
 {
     alias visit = Visitor.visit;
 
-    // Стек для лексического отслеживания pragma(lint, ...)
     LintFlags[] flagsStack;
-
-    // Изолированное состояние для отслеживания (вместо void* lintInfo и wasUsed)
     bool[VarDeclaration] unusedTrack;
 
     this()
     {
-        // Инициализируем стек базовым состоянием.
-        flagsStack ~= LintFlags.none;
+        flagsStack ~= LintFlags.none; 
     }
 
     LintFlags currentFlags()
     {
         return flagsStack.length > 0 ? flagsStack[$ - 1] : LintFlags.none;
     }
-
-    // ------------------------------------------------------------------------
-    // Обход дерева и управление лексическим контекстом (pragma)
-    // ------------------------------------------------------------------------
 
     override void visit(Dsymbol s) { }
     override void visit(Statement s) { }
@@ -61,16 +55,22 @@ extern(C++) final class LintVisitor : Visitor
             if (s) s.accept(this);
     }
 
-    // Обработка pragma(lint) на уровне объявлений
     override void visit(AttribDeclaration ad)
     {
-        PragmaDeclaration pd = ad.isPragmaDeclaration();
+        if (ad.decl)
+        {
+            foreach (s; *ad.decl)
+                if (s) s.accept(this);
+        }
+    }
+
+    override void visit(PragmaDeclaration pd)
+    {
         bool pushed = pushLintFlags(pd);
 
-        Dsymbols* decls = ad.include(null);
-        if (decls)
+        if (pd.decl)
         {
-            foreach (s; *decls)
+            foreach (s; *pd.decl)
                 if (s) s.accept(this);
         }
 
@@ -78,7 +78,6 @@ extern(C++) final class LintVisitor : Visitor
             flagsStack.length--;
     }
 
-    // Обработка pragma(lint) на уровне инструкций внутри тела функции
     override void visit(PragmaStatement ps)
     {
         bool pushed = false;
@@ -109,10 +108,6 @@ extern(C++) final class LintVisitor : Visitor
             if (s) s.accept(this);
     }
 
-    // ------------------------------------------------------------------------
-    // Анализ функций (применение правил)
-    // ------------------------------------------------------------------------
-
     override void visit(FuncDeclaration fd)
     {
         const flags = currentFlags();
@@ -122,8 +117,7 @@ extern(C++) final class LintVisitor : Visitor
 
         bool checkUnused = (flags & LintFlags.unusedParams) != 0;
 
-        // Сохраняем состояние для корректной работы с вложенными функциями
-        bool[VarDeclaration] oldTrack = unusedTrack; 
+        bool[VarDeclaration] oldTrack = unusedTrack;
         unusedTrack = null;
 
         if (checkUnused && fd.fbody && fd.parameters)
@@ -136,13 +130,12 @@ extern(C++) final class LintVisitor : Visitor
                     bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
                     if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
                     {
-                        unusedTrack[v] = false; // Добавляем параметр в трекер как неиспользованный
+                        unusedTrack[v] = false;
                     }
                 }
             }
         }
 
-        // Запускаем рекурсивный обход AST-дерева тела функции
         if (fd.fbody)
             fd.fbody.accept(this);
 
@@ -152,12 +145,12 @@ extern(C++) final class LintVisitor : Visitor
             {
                 if (!used)
                 {
-                    lint(v.loc, "unusedParams".ptr, "function parameter `%s` is never used".ptr, v.ident.toChars());
+                    warning(v.loc, "[unusedParams] function parameter `%s` is never used", v.ident.toChars());
                 }
             }
         }
 
-        unusedTrack = oldTrack; // Восстанавливаем родительский трекер
+        unusedTrack = oldTrack;
     }
 
     private void checkConstSpecial(FuncDeclaration fd)
@@ -172,12 +165,8 @@ extern(C++) final class LintVisitor : Visitor
         if (!fd.toParent2() || !fd.toParent2().isStructDeclaration())
             return;
 
-        lint(fd.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, fd.ident ? fd.ident.toChars() : fd.toChars());
+        warning(fd.loc, "[constSpecial] special method `%s` should be marked as `const`", fd.ident ? fd.ident.toChars() : fd.toChars());
     }
-
-    // ------------------------------------------------------------------------
-    // Вспомогательные методы прагм
-    // ------------------------------------------------------------------------
 
     private bool pushLintFlags(PragmaDeclaration pd)
     {
@@ -216,11 +205,6 @@ extern(C++) final class LintVisitor : Visitor
         return newFlags;
     }
 
-    // ------------------------------------------------------------------------
-    // Рекурсивный обход Statements и Expressions (для unusedParams)
-    // ------------------------------------------------------------------------
-
-    // Отмечаем использование переменной при обходе
     override void visit(VarExp ve)
     {
         if (auto vd = ve.var.isVarDeclaration())
@@ -230,7 +214,6 @@ extern(C++) final class LintVisitor : Visitor
         }
     }
 
-    // Проброс визитора сквозь Statements
     override void visit(CompoundStatement s)
     {
         if (s.statements)
@@ -263,7 +246,6 @@ extern(C++) final class LintVisitor : Visitor
         if (s._body) s._body.accept(this);
     }
 
-    // Проброс визитора сквозь Expressions
     override void visit(BinExp e)
     {
         if (e.e1) e.e1.accept(this);
@@ -284,7 +266,6 @@ extern(C++) final class LintVisitor : Visitor
     }
 }
 
-// Точка входа для запуска линтера после семантики
 extern(D) void runLinter(Module[] modules)
 {
     scope visitor = new LintVisitor();
