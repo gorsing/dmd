@@ -25,14 +25,18 @@ extern (D) enum LintFlags : uint
     all          = ~0
 }
 
+private struct TrackedParam
+{
+    VarDeclaration decl;
+    bool used;
+}
+
 extern(C++) final class LintVisitor : Visitor
 {
     alias visit = Visitor.visit;
 
     LintFlags[] flagsStack;
-
-    VarDeclaration[] activeParams;
-    bool[] activeUsed;
+    TrackedParam[] activeParams;
 
     this()
     {
@@ -139,17 +143,13 @@ extern(C++) final class LintVisitor : Visitor
 
         if (checkUnused)
         {
-            if (!fd.fbody)
-                checkUnused = false;
-            else if (fd.vtblIndex != -1 && !fd.isFinalFunc())
-                checkUnused = false;
-            else if (fd.foverrides.length > 0)
-                checkUnused = false;
-            else
+            import dmd.astenums : LINK;
+            if (!fd.fbody ||
+                (fd.vtblIndex != -1 && !fd.isFinalFunc()) ||
+                (fd.foverrides.length > 0) ||
+                (fd._linkage == LINK.c || fd._linkage == LINK.cpp || fd._linkage == LINK.windows))
             {
-                import dmd.astenums : LINK;
-                if (fd._linkage == LINK.c || fd._linkage == LINK.cpp || fd._linkage == LINK.windows)
-                    checkUnused = false;
+                checkUnused = false;
             }
         }
 
@@ -159,33 +159,31 @@ extern(C++) final class LintVisitor : Visitor
         {
             for (size_t i = 0; i < fd.parameters.length; i++)
             {
-                activeParams ~= (*fd.parameters)[i];
-                activeUsed ~= false;
+                VarDeclaration v = (*fd.parameters)[i];
+                bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
+
+                if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
+                {
+                    activeParams ~= TrackedParam(v, false);
+                }
             }
         }
 
         if (fd.fbody)
             fd.fbody.accept(this);
 
-        if (checkUnused && fd.parameters)
+        if (checkUnused)
         {
-            for (size_t i = 0; i < fd.parameters.length; i++)
+            for (size_t i = paramStart; i < activeParams.length; i++)
             {
-                size_t stackIdx = paramStart + i;
-                if (!activeUsed[stackIdx])
+                if (!activeParams[i].used)
                 {
-                    VarDeclaration v = (*fd.parameters)[i];
-                    bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
-                    if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
-                    {
-                        warning(v.loc, "[unusedParams] function parameter `%s` is never used", v.ident.toChars());
-                    }
+                    warning(activeParams[i].decl.loc, "[unusedParams] function parameter `%s` is never used", activeParams[i].decl.ident.toChars());
                 }
             }
         }
 
         activeParams.length = paramStart;
-        activeUsed.length = paramStart;
     }
 
     private void checkConstSpecial(FuncDeclaration fd)
@@ -244,11 +242,11 @@ extern(C++) final class LintVisitor : Visitor
     {
         if (auto vd = ve.var.isVarDeclaration())
         {
-            for (size_t i = 0; i < activeParams.length; i++)
+            for (size_t i = activeParams.length; i-- > 0; )
             {
-                if (activeParams[i] == vd)
+                if (activeParams[i].decl == vd)
                 {
-                    activeUsed[i] = true;
+                    activeParams[i].used = true;
                     break;
                 }
             }
