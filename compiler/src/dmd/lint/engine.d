@@ -12,8 +12,11 @@ import dmd.expression;
 import dmd.func;
 import dmd.id;
 import dmd.statement;
-import dmd.visitor;
 import dmd.init;
+
+// Импортируем "умный" транзитивный обходчик и узлы AST
+import dmd.visitor.parsetime : ParseTimeVisitor;
+import dmd.astcodegen : ASTCodegen;
 
 import dmd.errors : warning;
 
@@ -31,9 +34,11 @@ private struct TrackedParam
     bool used;
 }
 
-extern(C++) final class LintVisitor : Visitor
+// Наследуемся от умного визитора, который знает всё об AST
+extern(C++) final class LintVisitor : ParseTimeVisitor!ASTCodegen
 {
-    alias visit = Visitor.visit;
+    // Открываем доступ ко всем базовым методам visit, которые мы не переопределили
+    alias visit = typeof(super).visit;
 
     LintFlags[] flagsStack;
     TrackedParam[] activeParams;
@@ -48,49 +53,17 @@ extern(C++) final class LintVisitor : Visitor
         return flagsStack.length > 0 ? flagsStack[$ - 1] : LintFlags.none;
     }
 
-    override void visit(Dsymbol s) { }
-    override void visit(Statement s) { }
-    override void visit(Expression e) { }
-    override void visit(Initializer i) { }
-
-    override void visit(DeclarationExp de)
-    {
-        if (de && de.declaration)
-            de.declaration.accept(this);
-    }
-
-    override void visit(AliasDeclaration ad)
-    {
-        if (ad && ad.aliassym)
-            ad.aliassym.accept(this);
-    }
-
-    override void visit(Module m)
-    {
-        if (!m || !m.members) return;
-        foreach (s; *m.members)
-            if (s) s.accept(this);
-    }
-
-    override void visit(AttribDeclaration ad)
-    {
-        if (ad && ad.decl)
-        {
-            foreach (s; *ad.decl)
-                if (s) s.accept(this);
-        }
-    }
+    // =========================================================================
+    // ПЕРЕХВАТ ПРАГМ
+    // =========================================================================
 
     override void visit(PragmaDeclaration pd)
     {
         if (!pd) return;
         bool pushed = pushLintFlags(pd);
 
-        if (pd.decl)
-        {
-            foreach (s; *pd.decl)
-                if (s) s.accept(this);
-        }
+        // Магия: базовый класс сам обойдет pd.decl (внутренние объявления)
+        super.visit(pd);
 
         if (pushed)
             flagsStack.length--;
@@ -106,26 +79,16 @@ extern(C++) final class LintVisitor : Visitor
             flagsStack ~= parsePragmaArgs(ps.args);
         }
 
-        if (ps._body)
-            ps._body.accept(this);
+        // Магия: базовый класс сам обойдет ps._body (тело прагмы)
+        super.visit(ps);
 
         if (pushed)
             flagsStack.length--;
     }
 
-    override void visit(AggregateDeclaration ad)
-    {
-        if (!ad || !ad.members) return;
-        foreach (s; *ad.members)
-            if (s) s.accept(this);
-    }
-
-    override void visit(TemplateInstance ti)
-    {
-        if (!ti || !ti.members) return;
-        foreach (s; *ti.members)
-            if (s) s.accept(this);
-    }
+    // =========================================================================
+    // ПЕРЕХВАТ ФУНКЦИЙ И ПЕРЕМЕННЫХ
+    // =========================================================================
 
     override void visit(FuncDeclaration fd)
     {
@@ -169,8 +132,9 @@ extern(C++) final class LintVisitor : Visitor
             }
         }
 
-        if (fd.fbody)
-            fd.fbody.accept(this);
+        // Магия: мы не пишем `if (fd.fbody) fd.fbody.accept(this);`
+        // Транзитивный визитор сам зайдет в параметры, тело функции, лямбды и вложенные классы!
+        super.visit(fd);
 
         if (checkUnused)
         {
@@ -185,6 +149,30 @@ extern(C++) final class LintVisitor : Visitor
 
         activeParams.length = paramStart;
     }
+
+    override void visit(VarExp ve)
+    {
+        if (!ve || !ve.var) return;
+        
+        if (auto vd = ve.var.isVarDeclaration())
+        {
+            for (size_t i = activeParams.length; i-- > 0; )
+            {
+                if (activeParams[i].decl == vd)
+                {
+                    activeParams[i].used = true;
+                    break;
+                }
+            }
+        }
+
+        // Пробрасываем обход дальше на случай, если узлу есть что еще показать
+        super.visit(ve);
+    }
+
+    // =========================================================================
+    // ПРИВАТНЫЕ ХЕЛПЕРЫ (Без изменений)
+    // =========================================================================
 
     private void checkConstSpecial(FuncDeclaration fd)
     {
@@ -237,95 +225,6 @@ extern(C++) final class LintVisitor : Visitor
             }
         }
         return newFlags;
-    }
-
-    override void visit(VarExp ve)
-    {
-        if (!ve || !ve.var) return;
-        if (auto vd = ve.var.isVarDeclaration())
-        {
-            for (size_t i = activeParams.length; i-- > 0; )
-            {
-                if (activeParams[i].decl == vd)
-                {
-                    activeParams[i].used = true;
-                    break;
-                }
-            }
-        }
-    }
-
-    override void visit(CompoundStatement s)
-    {
-        if (s && s.statements)
-            foreach (stmt; *s.statements)
-                if (stmt) stmt.accept(this);
-    }
-
-    override void visit(ExpStatement s)
-    {
-        if (s && s.exp) s.exp.accept(this);
-    }
-
-    override void visit(IfStatement s)
-    {
-        if (!s) return;
-        if (s.condition) s.condition.accept(this);
-        if (s.ifbody) s.ifbody.accept(this);
-        if (s.elsebody) s.elsebody.accept(this);
-    }
-
-    override void visit(ReturnStatement s)
-    {
-        if (s && s.exp) s.exp.accept(this);
-    }
-
-    override void visit(ForStatement s)
-    {
-        if (!s) return;
-        if (s._init) s._init.accept(this);
-        if (s.condition) s.condition.accept(this);
-        if (s.increment) s.increment.accept(this);
-        if (s._body) s._body.accept(this);
-    }
-
-    override void visit(BinExp e)
-    {
-        if (!e) return;
-        if (e.e1) e.e1.accept(this);
-        if (e.e2) e.e2.accept(this);
-    }
-
-    override void visit(UnaExp e)
-    {
-        if (e && e.e1) e.e1.accept(this);
-    }
-
-    override void visit(CallExp e)
-    {
-        if (!e) return;
-        if (e.e1) e.e1.accept(this);
-        if (e.arguments)
-            foreach (arg; *e.arguments)
-                if (arg) arg.accept(this);
-    }
-
-    override void visit(VarDeclaration vd)
-    {
-        if (vd && vd._init)
-            vd._init.accept(this);
-    }
-
-    override void visit(ExpInitializer ei)
-    {
-        if (ei && ei.exp)
-            ei.exp.accept(this);
-    }
-
-    override void visit(FuncExp fe)
-    {
-        if (fe && fe.fd)
-            fe.fd.accept(this);
     }
 }
 
