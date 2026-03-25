@@ -53,35 +53,28 @@ extern(C++) final class LintVisitor : Visitor
     override void visit(Expression e) { }
     override void visit(Initializer i) { }
 
-    override void visit(TemplateDeclaration td)
-    {
-        if (!td.members) return;
-        foreach (s; *td.members)
-            if (s) s.accept(this);
-    }
-
     override void visit(DeclarationExp de)
     {
-        if (de.declaration)
+        if (de && de.declaration)
             de.declaration.accept(this);
     }
 
     override void visit(AliasDeclaration ad)
     {
-        if (ad.aliassym)
+        if (ad && ad.aliassym)
             ad.aliassym.accept(this);
     }
 
     override void visit(Module m)
     {
-        if (!m.members) return;
+        if (!m || !m.members) return;
         foreach (s; *m.members)
             if (s) s.accept(this);
     }
 
     override void visit(AttribDeclaration ad)
     {
-        if (ad.decl)
+        if (ad && ad.decl)
         {
             foreach (s; *ad.decl)
                 if (s) s.accept(this);
@@ -90,6 +83,7 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(PragmaDeclaration pd)
     {
+        if (!pd) return;
         bool pushed = pushLintFlags(pd);
 
         if (pd.decl)
@@ -104,6 +98,7 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(PragmaStatement ps)
     {
+        if (!ps) return;
         bool pushed = false;
         if (ps.ident == Id.lint)
         {
@@ -120,20 +115,22 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(AggregateDeclaration ad)
     {
-        if (!ad.members) return;
+        if (!ad || !ad.members) return;
         foreach (s; *ad.members)
             if (s) s.accept(this);
     }
 
     override void visit(TemplateInstance ti)
     {
-        if (!ti.members) return;
+        if (!ti || !ti.members) return;
         foreach (s; *ti.members)
             if (s) s.accept(this);
     }
 
     override void visit(FuncDeclaration fd)
     {
+        if (!fd) return;
+
         const flags = currentFlags();
 
         if (flags & LintFlags.constSpecial)
@@ -160,9 +157,12 @@ extern(C++) final class LintVisitor : Visitor
             for (size_t i = 0; i < fd.parameters.length; i++)
             {
                 VarDeclaration v = (*fd.parameters)[i];
-                bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
 
-                if (v.ident && !(v.storage_class & STC.temp) && !isIgnoredName)
+                if (!v || !v.ident) continue;
+
+                bool isIgnoredName = v.ident.toChars()[0] == '_';
+
+                if (!(v.storage_class & STC.temp) && !isIgnoredName)
                 {
                     activeParams ~= TrackedParam(v, false);
                 }
@@ -188,7 +188,7 @@ extern(C++) final class LintVisitor : Visitor
 
     private void checkConstSpecial(FuncDeclaration fd)
     {
-        if (fd.isGenerated() || (fd.storage_class & STC.const_) || fd.type.isConst())
+        if (fd.isGenerated() || (fd.storage_class & STC.const_) || (fd.type && fd.type.isConst()))
             return;
 
         if (fd.ident != Id.opEquals && fd.ident != Id.opCmp &&
@@ -222,6 +222,7 @@ extern(C++) final class LintVisitor : Visitor
         {
             foreach (arg; *args)
             {
+                if (!arg) continue;
                 auto id = arg.isIdentifierExp();
                 if (!id) continue;
 
@@ -240,6 +241,7 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(VarExp ve)
     {
+        if (!ve || !ve.var) return;
         if (auto vd = ve.var.isVarDeclaration())
         {
             for (size_t i = activeParams.length; i-- > 0; )
@@ -255,18 +257,19 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(CompoundStatement s)
     {
-        if (s.statements)
+        if (s && s.statements)
             foreach (stmt; *s.statements)
                 if (stmt) stmt.accept(this);
     }
 
     override void visit(ExpStatement s)
     {
-        if (s.exp) s.exp.accept(this);
+        if (s && s.exp) s.exp.accept(this);
     }
 
     override void visit(IfStatement s)
     {
+        if (!s) return;
         if (s.condition) s.condition.accept(this);
         if (s.ifbody) s.ifbody.accept(this);
         if (s.elsebody) s.elsebody.accept(this);
@@ -274,11 +277,12 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(ReturnStatement s)
     {
-        if (s.exp) s.exp.accept(this);
+        if (s && s.exp) s.exp.accept(this);
     }
 
     override void visit(ForStatement s)
     {
+        if (!s) return;
         if (s._init) s._init.accept(this);
         if (s.condition) s.condition.accept(this);
         if (s.increment) s.increment.accept(this);
@@ -287,17 +291,19 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(BinExp e)
     {
+        if (!e) return;
         if (e.e1) e.e1.accept(this);
         if (e.e2) e.e2.accept(this);
     }
 
     override void visit(UnaExp e)
     {
-        if (e.e1) e.e1.accept(this);
+        if (e && e.e1) e.e1.accept(this);
     }
 
     override void visit(CallExp e)
     {
+        if (!e) return;
         if (e.e1) e.e1.accept(this);
         if (e.arguments)
             foreach (arg; *e.arguments)
@@ -306,19 +312,19 @@ extern(C++) final class LintVisitor : Visitor
 
     override void visit(VarDeclaration vd)
     {
-        if (vd._init)
+        if (vd && vd._init)
             vd._init.accept(this);
     }
 
     override void visit(ExpInitializer ei)
     {
-        if (ei.exp)
+        if (ei && ei.exp)
             ei.exp.accept(this);
     }
 
     override void visit(FuncExp fe)
     {
-        if (fe.fd)
+        if (fe && fe.fd)
             fe.fd.accept(this);
     }
 }
@@ -328,6 +334,6 @@ extern(D) void runLinter(Module[] modules)
     scope visitor = new LintVisitor();
     foreach (m; modules)
     {
-        m.accept(visitor);
+        if (m) m.accept(visitor);
     }
 }
