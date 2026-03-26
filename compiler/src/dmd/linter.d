@@ -60,10 +60,12 @@ private void lintUnusedParams(FuncDeclaration funcdecl)
     if (!funcdecl.fbody || !funcdecl.parameters)
         return;
 
-    const bool isRequiredByInterface = funcdecl.isOverride() ||
-                                       (funcdecl.isVirtual() && !funcdecl.isFinal());
+    auto ad = funcdecl.isMember2();
+    bool isClassMethod = ad && ad.isClassDeclaration();
+    bool isVirtual = isClassMethod && !funcdecl.isStatic() && !(funcdecl.storage_class & STC.final_);
+    bool isOverride = (funcdecl.storage_class & STC.override_) || (funcdecl.foverrides.length > 0);
 
-    if (isRequiredByInterface)
+    if (isVirtual || isOverride)
         return;
 
     foreach (v; *funcdecl.parameters)
