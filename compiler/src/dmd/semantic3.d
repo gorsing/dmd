@@ -297,8 +297,6 @@ private extern(C++) final class Semantic3Visitor : Visitor
         funcdecl.hasSemantic3Errors = false;
         funcdecl.saferD = sc.previews.safer && !sc.inCfile;
 
-        lintConstSpecial(funcdecl);
-
         if (!funcdecl.type || funcdecl.type.ty != Tfunction)
             return;
         TypeFunction f = cast(TypeFunction)funcdecl.type;
@@ -1788,8 +1786,6 @@ void semanticTypeInfoMembers(StructDeclaration sd)
     {
         if (fd && fd._scope && fd.semanticRun < PASS.semantic3done)
         {
-            lintConstSpecial(fd, true);
-
             const errors = global.startGagging();
             fd.semantic3(fd._scope);
             if (global.endGagging(errors))
@@ -1805,7 +1801,6 @@ void semanticTypeInfoMembers(StructDeclaration sd)
         ftostr._scope &&
         ftostr.semanticRun < PASS.semantic3done)
     {
-        lintConstSpecial(ftostr, true);
         ftostr.semantic3(ftostr._scope);
     }
 
@@ -1813,7 +1808,6 @@ void semanticTypeInfoMembers(StructDeclaration sd)
         sd.xhash._scope &&
         sd.xhash.semanticRun < PASS.semantic3done)
     {
-        lintConstSpecial(sd.xhash, true);
         sd.xhash.semantic3(sd.xhash._scope);
     }
 
