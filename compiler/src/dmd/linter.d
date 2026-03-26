@@ -12,6 +12,14 @@ import dmd.dscope;
 import dmd.errors;
 import dmd.astenums;
 
+extern(D) struct LintContext
+{
+    uint usedParameters;
+
+    bool isUsed(size_t index) { return (usedParameters & (1 << index)) != 0; }
+    void markUsed(size_t index) { usedParameters |= (1 << index); }
+}
+
 /*************************************
  * Entry point for function linting.
  * Called from semantic3 after the function body is fully analyzed.
