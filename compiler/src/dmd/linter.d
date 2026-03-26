@@ -10,6 +10,7 @@ import dmd.declaration;
 import dmd.aggregate;
 import dmd.dscope;
 import dmd.errors;
+import dmd.astenums;
 
 /*************************************
  * Entry point for function linting.
