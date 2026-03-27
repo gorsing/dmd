@@ -7205,6 +7205,7 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
         }
 
         auto vd = e.var.isVarDeclaration();
+        if (vd) vd.wasUsed = true;
         auto fd = e.var.isFuncDeclaration();
 
         if (fd)
