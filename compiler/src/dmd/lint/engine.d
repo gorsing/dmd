@@ -59,11 +59,11 @@ extern(C++) final class LintVisitor : Visitor
             de.declaration.accept(this);
     }
 
-    override void visit(AliasDeclaration ad)
-    {
-        if (ad && ad.aliassym)
-            ad.aliassym.accept(this);
-    }
+    //override void visit(AliasDeclaration ad)
+    //{
+    //    if (ad && ad.aliassym)
+    //        ad.aliassym.accept(this);
+    //}
 
     override void visit(Module m)
     {
