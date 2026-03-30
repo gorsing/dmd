@@ -6000,6 +6000,21 @@ enum class LintFlags : uint32_t
     all = 4294967295u,
 };
 
+struct TrackedParam final
+{
+    VarDeclaration* decl;
+    bool used;
+    TrackedParam() :
+        decl(),
+        used()
+    {
+    }
+    TrackedParam(VarDeclaration* decl, bool used = false) :
+        decl(decl),
+        used(used)
+        {}
+};
+
 enum class ErrorPrintMode : uint8_t
 {
     simpleError = 0u,
@@ -7921,12 +7936,14 @@ class LintVisitor final : public Visitor
 public:
     using Visitor::visit;
     _d_dynamicArray< LintFlags > flagsStack;
-    void* unusedTrack;
+    _d_dynamicArray< TrackedParam > activeParams;
     LintVisitor();
     LintFlags currentFlags();
     void visit(Dsymbol* s) override;
     void visit(Statement* s) override;
     void visit(Expression* e) override;
+    void visit(Initializer* i) override;
+    void visit(DeclarationExp* de) override;
     void visit(Module* m) override;
     void visit(AttribDeclaration* ad) override;
     void visit(PragmaDeclaration* pd) override;
@@ -7943,6 +7960,9 @@ public:
     void visit(BinExp* e) override;
     void visit(UnaExp* e) override;
     void visit(CallExp* e) override;
+    void visit(VarDeclaration* vd) override;
+    void visit(ExpInitializer* ei) override;
+    void visit(FuncExp* fe) override;
 };
 
 extern _d_real creall(complex_t x);
