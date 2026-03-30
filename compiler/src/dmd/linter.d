@@ -1,7 +1,3 @@
-/**
- * Linter pass for the D compiler.
- * Performs additional static analysis to emit warnings for bad practices.
- */
 module dmd.linter;
 
 import dmd.func;
@@ -11,8 +7,11 @@ import dmd.aggregate;
 import dmd.dscope;
 import dmd.errors;
 import dmd.astenums;
+import dmd.expression;
+import dmd.visitor.transitive;
+import dmd.astcodegen;
 
-extern(D) struct LintContext
+struct LintContext
 {
     uint usedParameters;
 
@@ -20,10 +19,45 @@ extern(D) struct LintContext
     void markUsed(size_t index) { usedParameters |= (1 << index); }
 }
 
-/*************************************
- * Entry point for function linting.
- * Called from semantic3 after the function body is fully analyzed.
- */
+private extern (C++) final class UsageScanner : TransitiveVisitor!ASTCodegen
+{
+    alias visit = TransitiveVisitor!ASTCodegen.visit;
+    FuncDeclaration fd;
+    LintContext* ctx;
+
+    override void visit(VarExp e)
+    {
+        if (auto v = e.var.isVarDeclaration())
+        {
+            if (v.storage_class & STC.parameter)
+            {
+                if (fd.parameters)
+                {
+                    foreach (i, p; *fd.parameters)
+                    {
+                        if (v == p)
+                        {
+                            ctx.markUsed(i);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    override void visit(FuncExp e) {}
+    override void visit(DeclarationExp e) {}
+}
+
+private bool isIgnored(VarDeclaration v)
+{
+    if (!v.ident)
+        return true;
+    const(char)* s = v.ident.toChars();
+    return s[0] == '_';
+}
+
 void lintFunction(FuncDeclaration funcdecl)
 {
     if (!funcdecl || !funcdecl._scope)
@@ -33,9 +67,6 @@ void lintFunction(FuncDeclaration funcdecl)
     lintUnusedParams(funcdecl);
 }
 
-/***************************************
- * Checks if a special method should be marked as `const` and emits a lint warning.
- */
 void lintConstSpecial(FuncDeclaration fd, bool isKnownStructMember = false)
 {
     if (!fd || !fd._scope || !(fd._scope.lintFlags & LintFlags.constSpecial))
@@ -57,32 +88,34 @@ void lintConstSpecial(FuncDeclaration fd, bool isKnownStructMember = false)
     lint(fd.loc, "constSpecial".ptr, "special method `%s` should be marked as `const`".ptr, fd.ident ? fd.ident.toChars() : fd.toChars());
 }
 
-/***************************************
- * Checks for unused parameters in a function and emits a lint warning.
- */
-private void lintUnusedParams(FuncDeclaration funcdecl)
+private void lintUnusedParams(FuncDeclaration fd)
 {
-    if (!funcdecl._scope || !(funcdecl._scope.lintFlags & LintFlags.unusedParams))
+    if (!fd.fbody || !fd.parameters || fd.parameters.length == 0)
         return;
 
-    if (!funcdecl.fbody || !funcdecl.parameters)
+    if (!fd._scope || !(fd._scope.lintFlags & LintFlags.unusedParams))
         return;
 
-    auto ad = funcdecl.isMember2();
+    auto ad = fd.isMember2();
     bool isClassMethod = ad && ad.isClassDeclaration();
-    bool isVirtual = isClassMethod && !funcdecl.isStatic() && !(funcdecl.storage_class & STC.final_);
-    bool isOverride = (funcdecl.storage_class & STC.override_) || (funcdecl.foverrides.length > 0);
+    bool isVirtual = isClassMethod && !fd.isStatic() && !(fd.storage_class & STC.final_);
+    bool isOverride = (fd.storage_class & STC.override_) || (fd.foverrides.length > 0);
 
     if (isVirtual || isOverride)
         return;
 
-    foreach (v; *funcdecl.parameters)
-    {
-        bool isIgnoredName = v.ident && v.ident.toChars()[0] == '_';
+    LintContext ctx;
+    scope scanner = new UsageScanner();
+    scanner.fd = fd;
+    scanner.ctx = &ctx;
 
-        if (v.ident && !v.wasUsed && !(v.storage_class & STC.temp) && !isIgnoredName)
+    fd.fbody.accept(scanner);
+
+    foreach (i, v; *fd.parameters)
+    {
+        if (!ctx.isUsed(i) && !isIgnored(v))
         {
-            lint(v.loc, "unusedParams".ptr, "function parameter `%s` is never used".ptr, v.ident.toChars());
+            lint(v.loc, "unusedParams", "parameter `%s` is never used", v.ident.toChars());
         }
     }
 }
