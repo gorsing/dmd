@@ -4,9 +4,8 @@ TEST_OUTPUT:
 ----
 fail_compilation/lint_unused_params.d(18): Warning: [unusedParams] function parameter `y` is never used
 fail_compilation/lint_unused_params.d(37): Warning: [unusedParams] function parameter `b` is never used
-fail_compilation/lint_unused_params.d(44): Warning: [unusedParams] function parameter `y` is never used
-fail_compilation/lint_unused_params.d(53): Warning: [unusedParams] function parameter `b` is never used
-fail_compilation/lint_unused_params.d(65): Warning: [unusedParams] function parameter `z` is never used
+fail_compilation/lint_unused_params.d(52): Warning: [unusedParams] function parameter `b` is never used
+fail_compilation/lint_unused_params.d(64): Warning: [unusedParams] function parameter `z` is never used
 Error: warnings are treated as errors
        Use -wi if you wish to treat warnings only as informational.
 ----
