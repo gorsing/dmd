@@ -111,6 +111,7 @@ do
     import core.exception : onOutOfMemoryError;
     import core.stdc.string : memcpy, memset;
     import core.internal.array.utils: __typeAttrs;
+    import core.internal.traits : hasIndirections;
     import core.internal.lifetime : __doPostblit;
 
     import core.memory : GC;
@@ -140,6 +141,11 @@ do
     // step 2, if reserving in-place doesn't work, allocate a new array with at
     // least the requested allocated size.
     auto attrs = __typeAttrs!T((*p).ptr) | BlkAttr.APPENDABLE;
+
+    static if (!hasIndirections!T)
+    {
+        attrs |= BlkAttr.NO_SCAN;
+    }
 
     // use this static enum to avoid recomputing TypeInfo for every call.
     version (D_TypeInfo)
@@ -244,7 +250,7 @@ private size_t _d_arraysetlengthT_(Tarr : T[], T)(return ref scope Tarr arr, siz
     import core.checkedint : mulu;
     import core.exception : onFinalizeError, onOutOfMemoryError;
     import core.stdc.string : memcpy, memset;
-    import core.internal.traits : hasElaborateCopyConstructor, Unqual;
+    import core.internal.traits : hasElaborateCopyConstructor, Unqual, hasIndirections;
     import core.lifetime : emplace;
     import core.memory;
     import core.internal.lifetime : __doPostblit;
@@ -283,6 +289,11 @@ private size_t _d_arraysetlengthT_(Tarr : T[], T)(return ref scope Tarr arr, siz
     static if (is(T == struct) && __traits(hasMember, T, "xdtor"))
     {
         gcAttrs |= BlkAttr.FINALIZE;
+    }
+
+    static if (!hasIndirections!T)
+    {
+        gcAttrs |= BlkAttr.NO_SCAN;
     }
 
     if (!arr.ptr)
