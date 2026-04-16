@@ -3221,7 +3221,9 @@ public void errorSupplementalInferredAttr(FuncDeclaration fd, int maxDepth, bool
 
     if (s.action.length > 0)
     {
-        errorFunc(s.loc, "and %.*s makes it fail to infer `%.*s`", s.action.fTuple.expand, attr.fTuple.expand);
+        errorFunc(s.loc,
+            "contaminated by `%.*s`, so `%s` cannot infer `%.*s`",
+            s.action.fTuple.expand, fd.toErrMsg(), attr.fTuple.expand);
         // For scope violations, also print why the target parameter is not scope
         if (s.scopeVar)
         {
@@ -3233,7 +3235,9 @@ public void errorSupplementalInferredAttr(FuncDeclaration fd, int maxDepth, bool
     {
         if (maxDepth > 0)
         {
-            errorFunc(s.loc, "which calls `%s`", s.fd.toErrMsg());
+            errorFunc(s.loc,
+                "`%s` cannot use `%.*s` because it calls `%s`",
+                fd.toErrMsg(), attr.fTuple.expand, s.fd.toErrMsg());
             errorSupplementalInferredAttr(s.fd, maxDepth - 1, deprecation, stc, eSink);
         }
     }

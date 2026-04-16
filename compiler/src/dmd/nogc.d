@@ -362,7 +362,8 @@ extern (D) bool setGC(Scope* sc, FuncDeclaration fd, Loc loc, const(char)* fmt, 
             // Message wil be gagged, but still call error() to update global.errors and for
             // -verrors=spec
             string action = AttributeViolation(loc, fmt, args).action;
-            .error(loc, "%.*s is not allowed in a `@nogc` function", action.fTuple.expand);
+            .error(loc, "%.*s is not allowed in `@nogc` %s `%s`; this operation contaminates `@nogc` inference",
+                action.fTuple.expand, sc.func.kind(), sc.func.toErrMsg());
             return true;
         }
         return false;
