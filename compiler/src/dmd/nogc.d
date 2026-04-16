@@ -142,8 +142,13 @@ public:
         if (fd.ident == Id._d_arraysetlengthT)
         {
             if (setGC(e, "setting this array's `length`"))
+            {
+                if (fd.loc.isValid())
+                    errorSupplemental(fd.loc, "runtime hook `%s` is declared here", fd.toPrettyChars());
                 return;
+            }
             f.printGCUsage(e.loc, "setting `length` may cause a GC allocation");
+
         }
     }
 
