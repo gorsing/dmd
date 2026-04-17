@@ -3,7 +3,7 @@ TEST_OUTPUT:
 ---
 fail_compilation/diag9620.d(19): Error: `pure` function `diag9620.main.bar` cannot call impure function `diag9620.foo1`
 fail_compilation/diag9620.d(20): Error: `pure` function `diag9620.main.bar` cannot call impure function `diag9620.foo2!().foo2`
-fail_compilation/diag9620.d(13):        and accessing mutable static data `x` makes it fail to infer `pure`
+fail_compilation/diag9620.d(13):        contaminated by `accessing mutable static data `x`, so `foo2` cannot infer `pure`
 ---
 */
 
