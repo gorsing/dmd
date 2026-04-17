@@ -13,8 +13,6 @@
 
 module dmd.nogc;
 
-import core.stdc.stdio;
-
 import dmd.aggregate;
 import dmd.arraytypes;
 import dmd.astenums;
@@ -133,7 +131,7 @@ public:
     override void visit(CallExp e)
     {
         import dmd.id : Id;
-        import core.stdc.stdio : printf;
+
         if (!e.f)
             return;
 
@@ -142,13 +140,9 @@ public:
         if (fd.ident == Id._d_arraysetlengthT)
         {
             if (setGC(e, "setting this array's `length`"))
-            {
-                if (fd.loc.isValid())
-                    errorSupplemental(fd.loc, "runtime hook `%s` is declared here", fd.toPrettyChars());
                 return;
-            }
-            f.printGCUsage(e.loc, "setting `length` may cause a GC allocation");
 
+            f.printGCUsage(e.loc, "setting `length` may cause a GC allocation");
         }
     }
 
@@ -367,8 +361,8 @@ extern (D) bool setGC(Scope* sc, FuncDeclaration fd, Loc loc, const(char)* fmt, 
             // Message wil be gagged, but still call error() to update global.errors and for
             // -verrors=spec
             string action = AttributeViolation(loc, fmt, args).action;
-            .error(loc, "%.*s is not allowed in `@nogc` %s `%s`; this operation contaminates `@nogc` inference",
-                action.fTuple.expand, sc.func.kind(), sc.func.toErrMsg());
+            .error(loc, "%.*s is not allowed in `@nogc` %s `%s`",
+                action.fTuple.expand, fd.kind(), fd.toErrMsg());
             return true;
         }
         return false;
