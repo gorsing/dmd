@@ -71,7 +71,7 @@ private bool hasPackageAccess(Module mod, Dsymbol s)
 
     static if (LOG)
     {
-        printf("hasPackageAccess(s = '%s', mod = '%s', pkg = '%s')\n", 
+        printf("hasPackageAccess(s = '%s', mod = '%s', pkg = '%s')\n",
                s.toChars(), mod.toChars(), pkg ? pkg.toChars() : "NULL");
     }
 
