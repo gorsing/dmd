@@ -31,7 +31,7 @@ private enum LOG = false;
 
 
 /*******************************
- * Do access check for member of this class, this class being the
+ * Do access check for member of this class, this class being  the
  * type of the 'this' pointer used to access smember.
  * Returns true if the member is not accessible.
  */
