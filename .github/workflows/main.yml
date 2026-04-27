@@ -14,7 +14,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  call-precommit:
+    uses: ./.github/workflows/pre_commit.yml
+
   main:
+    needs: call-precommit
     strategy:
       fail-fast: false
       matrix:
@@ -180,6 +184,7 @@ jobs:
         run: ci/run.sh codecov
 
   freebsd-vm:
+    needs: call-precommit
     strategy:
       fail-fast: false
       matrix:
