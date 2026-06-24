@@ -13,6 +13,7 @@ fail_compilation/dtor_attributes.d(113):        generated `Strict.~this` is @sys
 fail_compilation/dtor_attributes.d(111):         - HasDtor member
 fail_compilation/dtor_attributes.d(103):           @system `HasDtor.~this` is declared here
 fail_compilation/dtor_attributes.d(118): Error: `@nogc` function `dtor_attributes.test1` cannot call non-@nogc destructor `dtor_attributes.Strict.~this`
+fail_compilation/dtor_attributes.d(113):        `dtor_attributes.Strict.~this` is declared here
 fail_compilation/dtor_attributes.d(113):        generated `Strict.~this` is non-@nogc because of the following field's destructors:
 fail_compilation/dtor_attributes.d(111):         - HasDtor member
 fail_compilation/dtor_attributes.d(103):           non-@nogc `HasDtor.~this` is declared here
