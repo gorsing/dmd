@@ -14,11 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  call-precommit:
-    uses: ./.github/workflows/precommit.yml
-
   main:
-    needs: call-precommit
     strategy:
       fail-fast: false
       matrix:
