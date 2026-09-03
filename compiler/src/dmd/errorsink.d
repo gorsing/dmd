@@ -15,6 +15,15 @@ import core.stdc.stdarg;
 
 import dmd.location;
 
+/// Constants used to discriminate kinds of error messages.
+enum ErrorKind
+{
+    warning,
+    deprecation,
+    error,
+    message,
+}
+
 /***************************************
  * Where error/warning/deprecation messages go.
  */
@@ -31,6 +40,8 @@ abstract class ErrorSink
     void vdeprecation(Loc loc, const(char)* format, va_list ap);
     void vdeprecationSupplemental(Loc loc, const(char)* format, va_list ap);
 
+static if (__VERSION__ < 2092)
+{
     void error(Loc loc, const(char)* format, ...)
     {
         va_list ap;
@@ -86,6 +97,72 @@ abstract class ErrorSink
         vdeprecationSupplemental(loc, format, ap);
         va_end(ap);
     }
+}
+else
+{
+    pragma(printf)
+    void error(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        verror(loc, format, ap);
+        va_end(ap);
+    }
+
+    pragma(printf)
+    void errorSupplemental(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        verrorSupplemental(loc, format, ap);
+        va_end(ap);
+    }
+
+    pragma(printf)
+    void warning(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vwarning(loc, format, ap);
+        va_end(ap);
+    }
+
+    pragma(printf)
+    void warningSupplemental(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vwarningSupplemental(loc, format, ap);
+        va_end(ap);
+    }
+
+    pragma(printf)
+    void message(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vmessage(loc, format, ap);
+        va_end(ap);
+    }
+
+    pragma(printf)
+    void deprecation(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vdeprecation(loc, format, ap);
+        va_end(ap);
+    }
+
+    pragma(printf)
+    void deprecationSupplemental(Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vdeprecationSupplemental(loc, format, ap);
+        va_end(ap);
+    }
+}
 
     /**
      * This will be called to indicate compilation has either
