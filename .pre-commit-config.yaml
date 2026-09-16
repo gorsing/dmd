@@ -25,3 +25,6 @@ repos:
   rev: 0.38.0
   hooks:
     - id: check-github-workflows
+    - id: check-azure-pipelines
+    - id: check-circle-ci
+    - id: check-codecov
