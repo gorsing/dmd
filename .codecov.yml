@@ -16,10 +16,10 @@ codecov:
     # Don't wait for the other CIs
     - circleci.com
     - dev.azure.com
-    - !dtest.dlang.io
-    - !auto-tester.puremagic.com
-    - !appveyor.com
-    - !ci.dlang.io
+    - "!dtest.dlang.io"
+    - "!auto-tester.puremagic.com"
+    - "!appveyor.com"
+    - "!ci.dlang.io"
 
   # At CircleCI, the PR is merged into `master` before the testsuite is run.
   # This allows CodeCov to adjust the resulting coverage diff, s.t. it matches
