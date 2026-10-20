@@ -153,6 +153,7 @@ import dmd.expression;
 import dmd.func;
 import dmd.funcsem;
 import dmd.globals;
+import dmd.hdrgen : toErrMsg;
 import dmd.id;
 import dmd.identifier;
 import dmd.mtype;
@@ -717,7 +718,7 @@ public:
             buf.writestring(fd.mangleOverride);
             return;
         }
-        if (fd.isMain())
+        if (fd.isDMain())
         {
             buf.writestring("_Dmain");
             return;
@@ -727,6 +728,23 @@ public:
             buf.writestring(fd.ident.toString());
             return;
         }
+
+        version (IN_LLVM)
+        {
+            import gen.llvmhelpers : isTargetWasm;
+            bool isWasm = isTargetWasm();
+        }
+        else bool isWasm = false;
+
+        if (fd.isCMain() && isWasm)
+        {
+            if (fd.parameters)
+                buf.writestring("__main_argc_argv");
+            else
+                buf.writestring("__main_void");
+            return;
+        }
+
         visit(cast(Declaration)fd);
     }
 
@@ -1024,7 +1042,7 @@ public:
 
     override void visit(ArrayLiteralExp e)
     {
-        const dim = e.elements ? e.elements.length : 0;
+        const dim = e.length;
         buf.writeByte('A');
         buf.print(dim);
         foreach (i; 0 .. dim)
