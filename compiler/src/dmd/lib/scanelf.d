@@ -17,7 +17,7 @@ import core.checkedint;
 
 import dmd.errorsink;
 import dmd.location;
-import dmd.root.string : fTuple;
+import dmd.common.string : fTuple;
 
 nothrow:
 

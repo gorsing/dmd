@@ -50,6 +50,7 @@ import dmd.opover;
 import dmd.pragmasem;
 import dmd.root.aav;
 import dmd.common.outbuffer;
+import dmd.common.string : fTuple;
 import dmd.rootobject;
 import dmd.root.filename;
 import dmd.root.string;

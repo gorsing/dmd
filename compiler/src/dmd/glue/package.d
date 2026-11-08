@@ -21,6 +21,7 @@ import dmd.root.array;
 import dmd.root.file;
 import dmd.root.filename;
 import dmd.common.outbuffer;
+import dmd.common.string : fTuple;
 import dmd.root.rmem;
 import dmd.root.string;
 

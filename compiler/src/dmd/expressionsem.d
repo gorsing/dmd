@@ -77,6 +77,7 @@ import dmd.root.ctfloat;
 import dmd.root.filename;
 import dmd.root.optional;
 import dmd.common.outbuffer;
+import dmd.common.string : fTuple;
 import dmd.rootobject;
 import dmd.root.string;
 import dmd.root.utf;

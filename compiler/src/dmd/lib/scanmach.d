@@ -18,7 +18,7 @@ import dmd.errorsink;
 import dmd.location;
 //import core.sys.darwin.mach.loader;
 import dmd.backend.mach;
-import dmd.root.string : fTuple;
+import dmd.common.string : fTuple;
 
 nothrow:
 

@@ -14,11 +14,10 @@ module dmd.lib.scanmscoff;
 import core.stdc.stdio;
 import core.stdc.string;
 
-import dmd.root.string;
+import dmd.common.string : fTuple;
 
 import dmd.errorsink;
 import dmd.location;
-import dmd.root.string : fTuple;
 
 nothrow:
 

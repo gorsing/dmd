@@ -142,3 +142,30 @@ unittest
     static assert(!startsWith("abc", "abd"));
     static assert(startsWith("\xC3\xA9", "\xC3"));
 }
+
+private struct FTuple(T...)
+{
+    T expand;
+}
+
+/// Returns: a (length, ptr) tuple for passing a D string to `printf`-style functions with the format string `%.*s`
+@trusted
+auto fTuple(const(char)[] str)
+{
+    return FTuple!(int, const(char)*)(cast(int) str.length, str.ptr);
+}
+
+///
+@trusted
+unittest
+{
+    const(char)[] str = "cutoff"[0..4];
+    const tuple = str.fTuple;
+    assert(tuple.expand[0] == 4);
+    assert(tuple.expand[1] == str.ptr);
+
+    const(char)[] emptyStr;
+    const empty = emptyStr.fTuple;
+    assert(empty.expand[0] == 0);
+    assert(empty.expand[1] == null);
+}

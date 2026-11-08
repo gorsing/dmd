@@ -39,7 +39,7 @@ import dmd.init;
 import dmd.location;
 import dmd.mtype;
 import dmd.rootobject : RootObject, DYNCAST;
-import dmd.root.string: fTuple;
+import dmd.common.string : fTuple;
 import dmd.semantic2;
 import dmd.semantic3;
 import dmd.tokens;

@@ -36,7 +36,7 @@ import dmd.identifier;
 import dmd.location;
 import dmd.mtype;
 import dmd.optimize;
-import dmd.root.string : fTuple;
+import dmd.common.string : fTuple;
 import dmd.statement;
 import dmd.templatesem;
 import dmd.tokens;
